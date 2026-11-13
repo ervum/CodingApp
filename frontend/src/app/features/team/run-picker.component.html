@@ -1,0 +1,87 @@
+<div class="run-picker" role="tablist" aria-label="Agent runs">
+  <div class="run-picker__chips">
+    @if (canEdit()) {
+      <button
+        type="button"
+        role="tab"
+        class="run-chip run-chip--new"
+        [class.is-active]="selected() === null"
+        [attr.aria-selected]="selected() === null"
+        title="Start a new chat run"
+        (click)="selectRun(null)"
+      >
+        <rd-icon name="plus" [size]="12" />
+        <span>New chat</span>
+      </button>
+    }
+
+    @if (live(); as liveId) {
+      <button
+        type="button"
+        role="tab"
+        class="run-chip run-chip--live"
+        [class.is-active]="selected() === liveId"
+        [attr.aria-selected]="selected() === liveId"
+        (click)="selectRun(liveId)"
+      >
+        <span class="run-chip__dot"></span>
+        <span>Live</span>
+      </button>
+    }
+
+    @for (run of runs(); track run.id) {
+      <div
+        class="run-chip"
+        [class.is-active]="selected() === run.id"
+        [attr.data-status]="run.status"
+      >
+        <button
+          type="button"
+          role="tab"
+          class="run-chip__select"
+          [attr.aria-selected]="selected() === run.id"
+          (click)="selectRun(run.id)"
+        >
+          <span class="run-chip__title">{{ run.taskTitle }}</span>
+          <span class="run-chip__meta">
+            · {{ run.startedAt | relativeTime }} · {{ statusGlyph(run.status) }}
+          </span>
+        </button>
+        @if (canEdit()) {
+          <button
+            type="button"
+            class="run-chip__delete"
+            title="Delete this run"
+            aria-label="Delete this run"
+            (click)="onDeleteRun($event, run.id)"
+          >
+            <rd-icon name="x" [size]="12" />
+          </button>
+        }
+      </div>
+    }
+  </div>
+
+  @if (canEdit()) {
+    <div class="run-picker__actions">
+      <button
+        type="button"
+        class="run-picker__action-btn"
+        title="Delete all runs in this chat"
+        (click)="clearChatRuns.emit()"
+      >
+        <rd-icon name="trash" [size]="12" />
+        <span>Delete chat runs</span>
+      </button>
+      <button
+        type="button"
+        class="run-picker__action-btn run-picker__action-btn--danger"
+        title="Delete all runs across all 15 agent chats"
+        (click)="clearAllStudioRuns.emit()"
+      >
+        <rd-icon name="trash" [size]="12" />
+        <span>Delete all chats</span>
+      </button>
+    </div>
+  }
+</div>

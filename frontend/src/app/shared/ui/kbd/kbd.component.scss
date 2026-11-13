@@ -1,0 +1,7 @@
+@use 'rd';
+
+:host {
+  display: inline-flex;
+  align-items: center;
+  gap: rd.space(1);
+}

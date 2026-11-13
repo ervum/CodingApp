@@ -1,0 +1,27 @@
+<div class="runner-footer">
+  <div class="runner-footer__label">AGENTS RUN ON</div>
+  <div class="runner-footer__toggle" role="group" aria-label="Agent runtime engine">
+    <button
+      type="button"
+      class="runner-footer__pill"
+      [class.is-active]="engine() === 'claude'"
+      (click)="engine.set('claude')"
+    >
+      Claude
+    </button>
+    <button
+      type="button"
+      class="runner-footer__pill"
+      [class.is-active]="engine() === 'codex'"
+      (click)="engine.set('codex')"
+    >
+      Codex
+    </button>
+  </div>
+  <a
+    class="runner-footer__status"
+    [routerLink]="['/s', store.studio()?.slug ?? 'inclined-games', 'settings']"
+  >
+    No account connected
+  </a>
+</div>

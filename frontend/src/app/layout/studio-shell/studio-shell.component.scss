@@ -1,0 +1,64 @@
+@use 'rd';
+
+:host {
+  display: grid;
+  height: 100dvh;
+  overflow: hidden;
+  grid-template-columns: rd.layout('sidebar-w') minmax(0, 1fr);
+  grid-template-rows: rd.layout('topbar-h') minmax(0, 1fr);
+  grid-template-areas:
+    'sidebar topbar'
+    'sidebar main';
+  background: rd.color('bg-0');
+
+  @include rd.respond-below('lg') {
+    grid-template-columns: rd.layout('sidebar-w-collapsed') minmax(0, 1fr);
+  }
+
+  @include rd.respond-below('md') {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'topbar'
+      'main';
+  }
+}
+
+.shell__sidebar {
+  grid-area: sidebar;
+  z-index: rd.z('sidebar');
+  min-height: 0;
+
+  @include rd.respond-below('md') {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: rd.layout('sidebar-w');
+    transform: translateX(-100%);
+    transition: transform rd.dur('slow') rd.ease('emphasized');
+    box-shadow: rd.shadow('lg');
+
+    &.is-open {
+      transform: translateX(0);
+    }
+  }
+}
+
+.shell__topbar {
+  grid-area: topbar;
+  z-index: rd.z('topbar');
+}
+
+.shell__main {
+  grid-area: main;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.shell__scrim {
+  position: fixed;
+  inset: 0;
+  background: rd.color('overlay');
+  z-index: rd.z('sidebar') - 1;
+  animation: rd-fade-in rd.dur('base') both;
+}

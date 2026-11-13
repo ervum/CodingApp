@@ -1,0 +1,25 @@
+@use 'rd';
+
+:host {
+  display: block;
+}
+
+.review__group + .review__group {
+  margin-top: rd.space(8);
+}
+
+.review__group-title {
+  @include rd.section-label;
+  margin: 0 0 rd.space(3);
+  display: flex;
+  align-items: center;
+  gap: rd.space(2);
+}
+
+.review__grid {
+  @include rd.auto-fill-grid(220px, rd.space(4));
+}
+
+.review__grid--stages {
+  @include rd.auto-fill-grid(360px, rd.space(4));
+}

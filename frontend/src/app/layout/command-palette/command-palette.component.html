@@ -1,0 +1,51 @@
+@if (open()) {
+  <div class="palette" (keydown)="onKeydown($event)">
+    <div class="palette__backdrop" (click)="close()"></div>
+    <div class="palette__panel" role="dialog" aria-modal="true" aria-label="Command palette">
+      <div class="palette__search">
+        <rd-icon name="search" [size]="16" />
+        <input
+          #searchInput
+          type="text"
+          class="palette__input"
+          placeholder="Go to a page, talk to an agent, find a conversation..."
+          [ngModel]="query()"
+          (ngModelChange)="onQueryChange($event)"
+        />
+        <rd-kbd [keys]="['Esc']" />
+      </div>
+
+      <div class="palette__results">
+        @if (allItems().length === 0) {
+          <div class="palette__empty">No matching results found.</div>
+        } @else {
+          @for (group of groups(); track group.title) {
+            <div class="palette__group">
+              <div class="palette__group-title">{{ group.title }}</div>
+              @for (item of group.items; track item.id) {
+                <button
+                  type="button"
+                  class="palette__item"
+                  [class.is-selected]="allItems()[activeIndex()]?.id === item.id"
+                  (click)="selectItem(item)"
+                >
+                  <span class="palette__item-left">
+                    @if (item.agentKey) {
+                      <rd-agent-avatar [agentKey]="item.agentKey" size="sm" />
+                    } @else if (item.icon) {
+                      <span class="palette__item-icon">
+                        <rd-icon [name]="item.icon" [size]="14" />
+                      </span>
+                    }
+                    <span class="palette__item-label">{{ item.label }}</span>
+                  </span>
+                  <span class="palette__item-sub">{{ item.sublabel }}</span>
+                </button>
+              }
+            </div>
+          }
+        }
+      </div>
+    </div>
+  </div>
+}

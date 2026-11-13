@@ -1,0 +1,55 @@
+@use 'rd';
+
+:host {
+  display: block;
+}
+
+.accordion {
+  @include rd.surface(2, 'lg');
+  overflow: hidden;
+
+  &[open] .accordion__chevron {
+    transform: rotate(90deg);
+  }
+}
+
+.accordion__summary {
+  display: flex;
+  align-items: center;
+  gap: rd.space(2.5);
+  height: 44px;
+  padding: 0 rd.space(4);
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+  font-weight: rd.fw('semibold');
+  color: rd.color('text-1');
+  @include rd.focus-ring(-2px);
+
+  &::-webkit-details-marker {
+    display: none;
+  }
+
+  &:hover {
+    background: rd.color('bg-3');
+  }
+}
+
+.accordion__chevron {
+  color: rd.color('text-3');
+  transition: transform rd.dur('fast') rd.ease('standard');
+}
+
+.accordion__title {
+  flex: 1 1 auto;
+}
+
+.accordion__badge {
+  font: #{rd.fw('medium')} #{rd.fs('xs')}/1 var(--rd-font-mono);
+  color: rd.color('text-3');
+}
+
+.accordion__body {
+  padding: rd.space(3) rd.space(4) rd.space(4);
+  border-top: 1px solid rd.color('border');
+}

@@ -1,0 +1,833 @@
+<section class="conns" aria-label="Model connections">
+  <header class="conns__header">
+    <div>
+      <h2 class="conns__title">MODEL CONNECTIONS</h2>
+      <p class="rd-text-muted">
+        Run agents on AI Studio, Gemini Web, Claude Web, ChatGPT Web, Antigravity, Claude Code, Codex, Desktop Apps (Gemini, Claude, GPT), Cloud GPUs, Local AI, or API keys.
+      </p>
+    </div>
+    @if (store.isAdmin()) {
+      <button type="button" class="rd-btn rd-btn--primary rd-btn--sm" (click)="openAdd()">
+        <rd-icon name="plus" [size]="14" />
+        <span>Add connection</span>
+      </button>
+    }
+  </header>
+
+  @if (store.isAdmin() && detectedRuntimes().length > 0) {
+    <div class="conns__sync-box" style="margin-bottom: 14px;">
+      <div class="conns__sync-header">
+        <div>
+          <div class="conns__label">Quick-Connect Platforms (Apps, CLIs &amp; Web Sessions)</div>
+          <div class="rd-text-muted">
+            One-click setup for Antigravity, Claude Code, Codex, Gemini App, Claude App, GPT App, Claude Web, and ChatGPT Web.
+          </div>
+        </div>
+      </div>
+      <div class="conns__sync-pills">
+        @for (rt of detectedRuntimes(); track rt.provider) {
+          <button
+            type="button"
+            class="rd-btn rd-btn--sm"
+            [class.rd-btn--primary]="hasProviderConnected(rt.provider)"
+            [class.rd-btn--secondary]="!hasProviderConnected(rt.provider)"
+            [disabled]="quickConnectingProvider() === rt.provider"
+            [title]="rt.notes"
+            (click)="quickConnectRuntime(rt)"
+          >
+            <span>
+              {{ rt.name }}
+              @if (rt.installed && rt.category !== 'web-session') {
+                · Ready
+              }
+            </span>
+          </button>
+        }
+      </div>
+    </div>
+  }
+
+  @if (connections().length === 0) {
+    <rd-empty-state
+      icon="sparkles"
+      title="No model connections configured"
+      description="Add a Google AI Browser Session, Local AI (Ollama/LM Studio), RunPod Cloud GPU, or API key connection to wake your agents."
+      [actionLabel]="store.isAdmin() ? 'Add connection' : ''"
+      (action)="openAdd()"
+    />
+  } @else {
+    <div class="conns__table-wrap">
+      <table class="conns__table">
+        <thead>
+          <tr>
+            <th>Provider</th>
+            <th>Label &amp; Endpoint</th>
+            <th>Auth</th>
+            <th>Status</th>
+            <th class="num">Bound Agents</th>
+            @if (store.isAdmin()) {
+              <th class="num">Actions</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (c of connections(); track c.id) {
+            <tr>
+              <td class="conns__mono">{{ providerLabel(c.provider) }}</td>
+              <td class="conns__label">
+                <div>{{ c.label }}</div>
+                @if (c.baseUrl) {
+                  <div class="conns__time">{{ c.baseUrl }}</div>
+                }
+              </td>
+              <td class="conns__mono">
+                @if (isBrowserLoginProvider(c.provider)) {
+                  Browser / App Session
+                } @else if (c.provider === 'ANTIGRAVITY' || c.provider === 'CLAUDE_CODE' || c.provider === 'CODEX') {
+                  CLI / Local Agent
+                } @else if (c.apiKeyLast4) {
+                  ••••{{ c.apiKeyLast4 }}
+                } @else {
+                  No key / Local
+                }
+              </td>
+              <td>
+                <div class="conns__status">
+                  <rd-status-pill
+                    [status]="!c.isEnabled ? 'PAUSED' : c.lastError ? 'ERROR' : c.lastVerifiedAt ? 'APPROVED' : 'IDLE'"
+                    [label]="!c.isEnabled ? 'DISABLED' : c.lastError ? 'ERROR' : c.lastVerifiedAt ? 'VERIFIED' : 'UNVERIFIED'"
+                  />
+                  @if (c.lastError) {
+                    <span class="conns__err" [title]="c.lastError">{{ c.lastError }}</span>
+                  } @else if (c.lastVerifiedAt) {
+                    <span class="conns__time">{{ c.lastVerifiedAt | relativeTime }}</span>
+                  }
+                </div>
+              </td>
+              <td class="num conns__mono">{{ c.boundAgentCount }}</td>
+              @if (store.isAdmin()) {
+                <td class="num">
+                  <div class="conns__actions">
+                    @if (c.provider === 'GOOGLE_WEB') {
+                      <select
+                        class="rd-select"
+                        style="width: auto; height: 28px; padding: 0 8px; font-size: 12px;"
+                        aria-label="Google Web or AI Studio model"
+                        [ngModel]="selectedWebModel()"
+                        (ngModelChange)="onWebModelSelectChange(c, $event)"
+                      >
+                        <optgroup label="Gemini Web (gemini.google.com)">
+                          @for (m of webBaseModels; track m.id) {
+                            @if (m.group === 'Gemini Web') {
+                              <option [value]="m.id">{{ m.label }}</option>
+                            }
+                          }
+                        </optgroup>
+                        <optgroup label="Gemini Web · Guest Mode (No Login)">
+                          @for (m of webBaseModels; track m.id) {
+                            @if (m.group === 'Gemini Web (Guest)') {
+                              <option [value]="m.id">{{ m.label }}</option>
+                            }
+                          }
+                        </optgroup>
+                        <optgroup label="Google AI Studio (aistudio.google.com)">
+                          @for (m of webBaseModels; track m.id) {
+                            @if (m.group === 'Google AI Studio') {
+                              <option [value]="m.id">{{ m.label }}</option>
+                            }
+                          }
+                        </optgroup>
+                      </select>
+                      @if (!selectedWebModel().startsWith('gemini-web-guest:')) {
+                        <select
+                          class="rd-select"
+                          style="width: auto; height: 28px; padding: 0 8px; font-size: 12px;"
+                          aria-label="Thinking level"
+                          [ngModel]="selectedThinkingLevel()"
+                          (ngModelChange)="onThinkingSelectChange(c, $event)"
+                        >
+                          @for (d of thinkingLevels; track d.id) {
+                            <option [value]="d.id">{{ d.label }}</option>
+                          }
+                        </select>
+                      } @else {
+                        <span
+                          class="conns__mono"
+                          title="Guest Mode sets thinking automatically"
+                        >
+                          Thinking: Auto
+                        </span>
+                      }
+                      @if (selectedWebModel().startsWith('aistudio:')) {
+                        <select
+                          class="rd-select"
+                          style="width: auto; height: 28px; padding: 0 8px; font-size: 12px;"
+                          aria-label="Media resolution"
+                          [ngModel]="selectedMediaResolution()"
+                          (ngModelChange)="onMediaResSelectChange(c, $event)"
+                        >
+                          @for (res of mediaResolutions; track res.id) {
+                            <option [value]="res.id">{{ res.label }}</option>
+                          }
+                        </select>
+                        @for (t of aiStudioToolOptions; track t.id) {
+                          <button
+                            type="button"
+                            class="rd-btn rd-btn--sm"
+                            [class.rd-btn--primary]="hasSelectedAiStudioTool(t.id)"
+                            [class.rd-btn--ghost]="!hasSelectedAiStudioTool(t.id)"
+                            [title]="t.fullLabel"
+                            (click)="toggleSelectedAiStudioTool(c, t.id)"
+                          >
+                            <span>{{ t.shortLabel }}</span>
+                          </button>
+                        }
+                      }
+                      <select
+                        class="rd-select"
+                        style="width: auto; height: 28px; padding: 0 8px; font-size: 12px;"
+                        aria-label="Create new chat mode"
+                        [ngModel]="selectedCreateNewChatMode()"
+                        (ngModelChange)="onCreateNewChatModeSelectChange(c, $event)"
+                      >
+                        @for (opt of createNewChatOptions; track opt.id) {
+                          <option [value]="opt.id" [title]="opt.description">{{ opt.label }}</option>
+                        }
+                      </select>
+                      <button
+                        type="button"
+                        class="rd-btn rd-btn--primary rd-btn--sm"
+                        [disabled]="browserLoggingInId() === c.id"
+                        (click)="launchBrowserLogin(c)"
+                      >
+                        <span>{{ browserLoggingInId() === c.id ? 'Signing in…' : 'Sign in with Browser' }}</span>
+                      </button>
+                    } @else if (isBrowserLoginProvider(c.provider)) {
+                      <button
+                        type="button"
+                        class="rd-btn rd-btn--primary rd-btn--sm"
+                        [disabled]="browserLoggingInId() === c.id"
+                        (click)="launchBrowserLogin(c)"
+                      >
+                        <span>{{ browserLoggingInId() === c.id ? 'Signing in…' : 'Sign in with Browser' }}</span>
+                      </button>
+                    }
+                    @if (c.provider === 'OLLAMA') {
+                      <button
+                        type="button"
+                        class="rd-btn rd-btn--secondary rd-btn--sm"
+                        (click)="openPullDialog(c)"
+                      >
+                        <span>Pull Model</span>
+                      </button>
+                    }
+                    @if (c.provider === 'RUNPOD' && extractRunpodPodId(c.baseUrl) && c.hasApiKey) {
+                      <button
+                        type="button"
+                        class="rd-btn rd-btn--secondary rd-btn--sm"
+                        (click)="controlRunpod(c, 'RESUME')"
+                      >
+                        <span>Start Pod</span>
+                      </button>
+                      <button
+                        type="button"
+                        class="rd-btn rd-btn--ghost rd-btn--sm"
+                        (click)="controlRunpod(c, 'STOP')"
+                      >
+                        <span>Stop Pod</span>
+                      </button>
+                    }
+                    <button
+                      type="button"
+                      class="rd-btn rd-btn--secondary rd-btn--sm"
+                      (click)="bindAllAgents(c)"
+                    >
+                      <span>Use for all 15 agents</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="rd-btn rd-btn--secondary rd-btn--sm"
+                      [disabled]="testingId() === c.id"
+                      (click)="test(c)"
+                    >
+                      <span>Test</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="rd-btn rd-btn--ghost rd-btn--sm"
+                      (click)="openEdit(c)"
+                    >
+                      <span>Edit</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="rd-btn rd-btn--ghost rd-btn--sm"
+                      (click)="toggleEnabled(c)"
+                    >
+                      <span>{{ c.isEnabled ? 'Disable' : 'Enable' }}</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="rd-btn rd-btn--danger rd-btn--sm"
+                      (click)="remove(c)"
+                    >
+                      <span>Delete</span>
+                    </button>
+                  </div>
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  @if (store.canEdit()) {
+    <section class="conns__automation" aria-label="Studio Context Mode">
+      <header class="conns__subheader">
+        <div>
+          <h3 class="conns__title">STUDIO CONTEXT MODE (GENERAL VS ROBLOX)</h3>
+          <p class="rd-text-muted">
+            Switch between <strong>General</strong> mode (for coding any non-Roblox software, web apps, scripts, APIs, or tools) and <strong>Roblox</strong> mode (Luau, Roblox Studio MCP, and Silicon/Rojo architectures).
+          </p>
+        </div>
+        <div class="conns__actions">
+          @for (cm of contextModes; track cm.id) {
+            <button
+              type="button"
+              class="rd-btn rd-btn--sm"
+              [class.rd-btn--primary]="contextMode() === cm.id"
+              [class.rd-btn--secondary]="contextMode() !== cm.id"
+              [disabled]="savingStudioSetting()"
+              (click)="onContextModeChange(cm.id)"
+            >
+              <span>{{ cm.badge }} Mode</span>
+            </button>
+          }
+        </div>
+      </header>
+
+      <div class="conns__toggles">
+        @for (cm of contextModes; track cm.id) {
+          <label
+            class="conns__toggle-row"
+            [class.conns__toggle-row--active]="contextMode() === cm.id"
+          >
+            <input
+              type="radio"
+              name="studioContextMode"
+              [value]="cm.id"
+              [checked]="contextMode() === cm.id"
+              [disabled]="savingStudioSetting()"
+              (change)="onContextModeChange(cm.id)"
+            />
+            <div class="conns__mode-body">
+              <div class="conns__label">{{ cm.label }}</div>
+              <div class="rd-text-muted">{{ cm.description }}</div>
+            </div>
+          </label>
+        }
+      </div>
+    </section>
+
+    <section class="conns__automation" aria-label="Terminal and File Permissions">
+      <header class="conns__subheader">
+        <div>
+          <h3 class="conns__title">TERMINAL &amp; WORKSPACE FILE PERMISSIONS</h3>
+          <p class="rd-text-muted">
+            Agents can create and edit files inside <code>/workspace/</code> freely without permission. Outside of <code>/workspace/</code> and when executing terminal commands (Command Prompt, PowerShell, Bash, WSL), agents <strong>always ask for permission first</strong> unless you enable the overrides below.
+          </p>
+        </div>
+      </header>
+
+      <div class="conns__toggles">
+        <label class="conns__toggle-row">
+          <input
+            type="checkbox"
+            [ngModel]="allowTerminalWithoutPermission()"
+            [disabled]="savingStudioSetting()"
+            (ngModelChange)="onToggleAllowTerminalWithoutPermission($event)"
+          />
+          <div>
+            <div class="conns__label">
+              Always allow executing terminal commands without asking for permission
+            </div>
+            <div class="rd-text-muted">
+              When OFF (default), agents always pause and ask for your approval before running commands on Command Prompt (<code>cmd</code>), PowerShell (<code>powershell</code> / <code>pwsh</code>), or Bash/WSL. Turn ON to let agents execute terminal commands automatically.
+            </div>
+          </div>
+        </label>
+
+        <label class="conns__toggle-row">
+          <input
+            type="checkbox"
+            [ngModel]="allowExternalFilesWithoutPermission()"
+            [disabled]="savingStudioSetting()"
+            (ngModelChange)="onToggleAllowExternalFilesWithoutPermission($event)"
+          />
+          <div>
+            <div class="conns__label">
+              Always allow creating or editing files outside <code>/workspace/</code> without asking for permission
+            </div>
+            <div class="rd-text-muted">
+              Files inside <code>/workspace/</code> never require permission. When OFF (default), any attempt by an agent to write or edit a file outside <code>/workspace/</code> pauses and asks for your approval first. Turn ON to allow external file writes automatically.
+            </div>
+          </div>
+        </label>
+
+        <label class="conns__toggle-row">
+          <input
+            type="checkbox"
+            [ngModel]="allowPcControlWithoutPermission()"
+            [disabled]="savingStudioSetting()"
+            (ngModelChange)="onToggleAllowPcControlWithoutPermission($event)"
+          />
+          <div>
+            <div class="conns__label">
+              Always allow controlling the physical Main PC without asking for permission
+            </div>
+            <div class="rd-text-muted">
+              When OFF (default), if you are actively using the PC, agents ask for permission first. If you have been idle for over <strong>{{ pcIdleTakeoverSeconds() }} seconds</strong>, agents automatically start working on the Main PC until you press <code>Ctrl + Shift + Delete</code> (emergency stop).
+            </div>
+          </div>
+        </label>
+      </div>
+
+      <div class="conns__sync-box" style="margin-top: 12px;">
+        <div class="conns__sync-header">
+          <div>
+            <div class="conns__label">
+              PC Idle Auto-Takeover Timer &amp; 15-Agent Sandboxes (Local or Cloud GPU / VM)
+            </div>
+            <div class="rd-text-muted">
+              All 15 agents can instantiate up to 15 concurrent isolated Sandboxes (1 per agent) without moving your physical mouse. For physical Main PC access, higher-priority agents preempt lower-priority ones.
+            </div>
+          </div>
+        </div>
+
+        <div class="conns__actions" style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; align-items: center;">
+          <label class="rd-field" style="min-width: 190px; margin: 0;">
+            <span class="rd-label">Idle Auto-Takeover (seconds)</span>
+            <input
+              type="number"
+              class="rd-input"
+              min="0"
+              max="3600"
+              [ngModel]="pcIdleTakeoverSeconds()"
+              [disabled]="savingStudioSetting()"
+              (change)="onPcIdleTakeoverSecondsChange($any($event.target).value)"
+            />
+          </label>
+
+          <label class="rd-field" style="min-width: 220px; margin: 0;">
+            <span class="rd-label">Sandbox Access Policy (Up to 15 Concurrent)</span>
+            <select
+              class="rd-select"
+              [ngModel]="sandboxAccessPolicy()"
+              [disabled]="savingStudioSetting()"
+              (ngModelChange)="onSandboxAccessPolicyChange($event)"
+            >
+              <option value="ALLOW">Always Allow Sandboxes (Default)</option>
+              <option value="ASK">Always Ask Permission for Sandboxes</option>
+              <option value="DENY">Do Not Allow Sandboxes</option>
+            </select>
+          </label>
+
+          <label class="rd-field" style="min-width: 240px; margin: 0;">
+            <span class="rd-label">Sandbox Execution Backend</span>
+            <select
+              class="rd-select"
+              [ngModel]="sandboxProviderKind()"
+              [disabled]="savingStudioSetting()"
+              (ngModelChange)="onSandboxProviderKindChange($event)"
+            >
+              <option value="LOCAL">Local Isolated Sandbox (Workspace + Viewport + Shell)</option>
+              <option value="CLOUD_GPU">Cloud GPU / Dedicated VM Service</option>
+            </select>
+          </label>
+        </div>
+
+        <div style="margin-top: 10px;">
+          <div class="rd-label" style="margin-bottom: 6px;">
+            15-Agent PC Priority Hierarchy (Highest Need → Lowest Need)
+          </div>
+          <div class="conns__sync-pills">
+            @for (item of agentPriorityRanking; track item.key) {
+              <span
+                class="conns__mono"
+                style="padding: 3px 8px; border-radius: 6px; border: 1px solid rgba(148, 163, 184, 0.25); font-size: 11px;"
+                [title]="'Priority score: ' + item.priority"
+              >
+                #{{ item.rank }} {{ item.name }} ({{ item.priority }})
+              </span>
+            }
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="conns__automation" aria-label="Roblox Studio Direct Automation and Publishing">
+      <header class="conns__subheader">
+        <div>
+          <h3 class="conns__title">ROBLOX STUDIO DIRECT LIFECYCLE, SAVE &amp; PUBLISH</h3>
+          <p class="rd-text-muted">
+            Agents can interact with Roblox Studio via <code>.rbxlx</code> files, Silicon / Rojo / Azul / Argon, Roblox Studio MCP, Open Cloud API, "Insert From File...", and manual human-like GUI script creation &amp; playtesting.
+          </p>
+        </div>
+      </header>
+
+      <div class="conns__toggles">
+        <label class="conns__toggle-row">
+          <input
+            type="checkbox"
+            [ngModel]="allowAutoSaveVersion()"
+            [disabled]="savingStudioSetting()"
+            (ngModelChange)="onToggleAllowAutoSaveVersion($event)"
+          />
+          <div>
+            <div class="conns__label">
+              Allow agents to save place versions without asking for permission (Default: ON)
+            </div>
+            <div class="rd-text-muted">
+              When ON, agents can save place versions (<code>Ctrl+S</code>, <code>.rbxlx</code> snapshot, and Studio version history) automatically. Turn OFF to require human approval first.
+            </div>
+          </div>
+        </label>
+
+        <label class="conns__toggle-row">
+          <input
+            type="checkbox"
+            [ngModel]="allowAutoPublish()"
+            [disabled]="savingStudioSetting()"
+            (ngModelChange)="onToggleAllowAutoPublish($event)"
+          />
+          <div>
+            <div class="conns__label">
+              Allow agents to fully publish experiences without asking for permission (Default: ON)
+            </div>
+            <div class="rd-text-muted">
+              When ON, agents can publish directly to Roblox via Open Cloud API or Roblox Studio GUI (<code>Alt+P</code>) without asking. Turn OFF to require human approval before publishing.
+            </div>
+          </div>
+        </label>
+      </div>
+
+      <div class="conns__sync-box" style="margin-top: 12px;">
+        <div class="conns__sync-header">
+          <div>
+            <div class="conns__label">Roblox Open Cloud Place Publishing API (Optional)</div>
+            <div class="rd-text-muted">
+              Configure a Universe ID, Place ID, and Open Cloud API Key to let agents publish compiled <code>.rbxlx</code> files directly via <code>apis.roblox.com/universes/v1/.../places/.../versions</code> in addition to Studio GUI / CLI / MCP.
+            </div>
+          </div>
+        </div>
+        <div class="conns__actions" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; align-items: flex-end;">
+          <label class="rd-field" style="flex: 1; min-width: 160px; margin: 0;">
+            <span class="rd-label">Universe ID</span>
+            <input
+              type="text"
+              class="rd-input"
+              placeholder="e.g. 5819203910"
+              [ngModel]="robloxUniverseIdDraft()"
+              (ngModelChange)="robloxUniverseIdDraft.set($event)"
+            />
+          </label>
+          <label class="rd-field" style="flex: 1; min-width: 160px; margin: 0;">
+            <span class="rd-label">Place ID</span>
+            <input
+              type="text"
+              class="rd-input"
+              placeholder="e.g. 17283910293"
+              [ngModel]="robloxPlaceIdDraft()"
+              (ngModelChange)="robloxPlaceIdDraft.set($event)"
+            />
+          </label>
+          <label class="rd-field" style="flex: 2; min-width: 220px; margin: 0;">
+            <span class="rd-label">
+              Open Cloud API Key
+              @if (store.studio()?.hasOpenCloudApiKey) {
+                (Saved ✓)
+              }
+            </span>
+            <input
+              type="password"
+              class="rd-input"
+              placeholder="Leave blank to keep existing key"
+              [ngModel]="openCloudKeyDraft()"
+              (ngModelChange)="openCloudKeyDraft.set($event)"
+            />
+          </label>
+          <button
+            type="button"
+            class="rd-btn rd-btn--primary rd-btn--sm"
+            [disabled]="savingStudioSetting()"
+            (click)="saveRobloxOpenCloudSettings()"
+          >
+            <span>Save Open Cloud Config</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    @if (contextMode() === 'ROBLOX') {
+    <section class="conns__automation" aria-label="Coding Mode">
+      <header class="conns__subheader">
+        <div>
+          <h3 class="conns__title">ROBLOX CODING MODE</h3>
+          <p class="rd-text-muted">
+            Choose how Lead and specialist agents create and synchronize Luau scripts and Roblox instances—either directly inside Roblox Studio via MCP or locally following your synchronization program's architecture.
+          </p>
+        </div>
+      </header>
+
+      <div class="conns__toggles">
+        @for (mode of codingModes; track mode.id) {
+          <label
+            class="conns__toggle-row"
+            [class.conns__toggle-row--active]="codingMode() === mode.id"
+          >
+            <input
+              type="radio"
+              name="studioCodingMode"
+              [value]="mode.id"
+              [checked]="codingMode() === mode.id"
+              [disabled]="savingStudioSetting()"
+              (change)="onCodingModeChange(mode.id)"
+            />
+            <div class="conns__mode-body">
+              <div class="conns__label">{{ mode.label }}</div>
+              <div class="rd-text-muted">{{ mode.description }}</div>
+            </div>
+          </label>
+        }
+      </div>
+
+      @if (codingMode() === 'LOCAL_SYNC') {
+        <div class="conns__sync-box">
+          <div class="conns__sync-header">
+            <div>
+              <div class="conns__label">Synchronization Program Architecture</div>
+              <div class="rd-text-muted">
+                Select which synchronization plugin/program you use. Agents and <code>save_artifact</code> automatically structure files to match its architecture.
+              </div>
+            </div>
+            <select
+              class="rd-select conns__sync-select"
+              aria-label="Synchronization program"
+              [ngModel]="codingSyncTool()"
+              [disabled]="savingStudioSetting()"
+              (ngModelChange)="onCodingSyncToolChange($event)"
+            >
+              @for (tool of codingSyncTools; track tool.id) {
+                <option [value]="tool.id">{{ tool.label }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="conns__sync-pills">
+            @for (tool of codingSyncTools; track tool.id) {
+              <button
+                type="button"
+                class="rd-btn rd-btn--sm"
+                [class.rd-btn--primary]="codingSyncTool() === tool.id"
+                [class.rd-btn--secondary]="codingSyncTool() !== tool.id"
+                [disabled]="savingStudioSetting()"
+                (click)="onCodingSyncToolChange(tool.id)"
+              >
+                <span>{{ tool.label }}</span>
+              </button>
+            }
+          </div>
+
+          <div class="conns__sync-preview">
+            <div class="conns__sync-meta">
+              <span class="conns__label">{{ selectedSyncToolMeta().label }}</span>
+              <span class="conns__mono">{{ selectedSyncToolMeta().badge }}</span>
+            </div>
+            <p class="rd-text-muted">{{ selectedSyncToolMeta().description }}</p>
+            <pre class="conns__tree"><code>{{ selectedSyncToolMeta().exampleTree }}</code></pre>
+          </div>
+        </div>
+      }
+    </section>
+    }
+
+    <section class="conns__automation" aria-label="Browser and Web Chat Automation">
+      <header class="conns__subheader">
+        <div>
+          <h3 class="conns__title">BROWSER &amp; WEB CHAT AUTOMATION</h3>
+          <p class="rd-text-muted">
+            Control whether the agent browser runs visibly or headless, and manage automatic or manual deletion of Gemini Web / AI Studio chats created by Lead and specialist agents.
+          </p>
+        </div>
+        <div class="conns__actions">
+          <button
+            type="button"
+            class="rd-btn rd-btn--secondary rd-btn--sm"
+            [disabled]="togglingBrowser()"
+            title="Show or hide the live browser window where agents are running (works even when default is headless)"
+            (click)="onToggleLiveBrowserVisibility()"
+          >
+            <span>{{ isBrowserVisible() ? 'Hide Browser Window' : 'Show Browser Window' }}</span>
+          </button>
+          <button
+            type="button"
+            class="rd-btn rd-btn--danger rd-btn--sm"
+            [disabled]="deletingLastRun()"
+            title="Delete all Gemini Web / AI Studio chats created by agents during the last run"
+            (click)="onDeleteLastRunWebChats()"
+          >
+            <span>{{ deletingLastRun() ? 'Deleting…' : 'Delete All Chats (Last Run)' }}</span>
+          </button>
+        </div>
+      </header>
+
+      <div class="conns__toggles">
+        <label class="conns__toggle-row">
+          <input
+            type="checkbox"
+            [ngModel]="showBrowserByDefault()"
+            [disabled]="savingStudioSetting()"
+            (ngModelChange)="onToggleShowBrowserByDefault($event)"
+          />
+          <div>
+            <div class="conns__label">Show browser window instead of running headless</div>
+            <div class="rd-text-muted">
+              When enabled, the Chromium window where agents interact with Gemini Web / AI Studio is shown on screen by default. Even when off (headless), you can click "Show Browser Window" at any time.
+            </div>
+          </div>
+        </label>
+
+        <label class="conns__toggle-row">
+          <input
+            type="checkbox"
+            [ngModel]="autoDeleteCreatedChats()"
+            [disabled]="savingStudioSetting()"
+            (ngModelChange)="onToggleAutoDeleteCreatedChats($event)"
+          />
+          <div>
+            <div class="conns__label">
+              Automatically delete agent-created chats from Gemini Web / AI Studio when a task finishes
+            </div>
+            <div class="rd-text-muted">
+              Safety guarantee: Only chats recorded in the database as created by Lead and the other studio agents are ever deleted. Your personal user chats are never touched.
+            </div>
+          </div>
+        </label>
+      </div>
+
+      @if (webChats().length > 0) {
+        <div class="conns__table-wrap">
+          <table class="conns__table">
+            <thead>
+              <tr>
+                <th>Chat Name / ID</th>
+                <th>Responsible Agent</th>
+                <th>Platform</th>
+                <th>Created At</th>
+                <th>Status</th>
+                <th class="num">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (chat of webChats(); track chat.id) {
+                <tr>
+                  <td class="conns__label">
+                    <div>{{ chat.chatTitle }}</div>
+                    <div class="conns__time">{{ chat.externalChatId || chat.chatUrl }}</div>
+                  </td>
+                  <td class="conns__mono">{{ agentName(chat.agentKey) }} ({{ chat.agentKey }})</td>
+                  <td class="conns__mono">{{ platformLabel(chat.platform) }}</td>
+                  <td class="conns__time">{{ chat.createdAt | relativeTime }}</td>
+                  <td>
+                    <rd-status-pill
+                      [status]="chat.status === 'DELETED' ? 'APPROVED' : chat.status === 'FAILED' ? 'ERROR' : 'IDLE'"
+                      [label]="chat.status"
+                    />
+                  </td>
+                  <td class="num">
+                    <div class="conns__actions">
+                      @if (chat.status !== 'DELETED') {
+                        <button
+                          type="button"
+                          class="rd-btn rd-btn--ghost rd-btn--sm"
+                          [disabled]="deletingChatId() === chat.id"
+                          (click)="onDeleteSingleWebChat(chat)"
+                        >
+                          <span>{{ deletingChatId() === chat.id ? 'Deleting…' : 'Delete chat' }}</span>
+                        </button>
+                        <button
+                          type="button"
+                          class="rd-btn rd-btn--ghost rd-btn--sm"
+                          [disabled]="deletingLastRun()"
+                          (click)="onDeleteAgentWebChats(chat.agentKey)"
+                        >
+                          <span>Delete all {{ agentName(chat.agentKey) }} chats</span>
+                        </button>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+  }
+
+  <rd-connection-form-dialog
+    [connection]="editingConn()"
+    [(open)]="dialogOpen"
+    (saved)="load(); store.reloadSnapshot()"
+  />
+
+  <rd-dialog [(open)]="pullDialogOpen" title="Pull model via Ollama" width="440px">
+    <form class="conn-form" (ngSubmit)="submitPullModel()">
+      <label class="rd-field">
+        <span class="rd-label">Model tag to download</span>
+        <input
+          type="text"
+          class="rd-input"
+          name="pullModelName"
+          required
+          placeholder="e.g. qwen2.5-coder:7b or llama3.2:3b"
+          [ngModel]="pullModelName()"
+          (ngModelChange)="pullModelName.set($event)"
+        />
+      </label>
+      <div class="conn-form__presets">
+        <button
+          type="button"
+          class="rd-btn rd-btn--secondary rd-btn--sm"
+          (click)="pullModelName.set('qwen2.5-coder:7b')"
+        >
+          qwen2.5-coder:7b
+        </button>
+        <button
+          type="button"
+          class="rd-btn rd-btn--secondary rd-btn--sm"
+          (click)="pullModelName.set('llama3.2:3b')"
+        >
+          llama3.2:3b
+        </button>
+        <button
+          type="button"
+          class="rd-btn rd-btn--secondary rd-btn--sm"
+          (click)="pullModelName.set('deepseek-r1:8b')"
+        >
+          deepseek-r1:8b
+        </button>
+      </div>
+      <div class="conn-form__actions">
+        <button type="button" class="rd-btn rd-btn--ghost" (click)="pullDialogOpen.set(false)">
+          Cancel
+        </button>
+        <button type="submit" class="rd-btn rd-btn--primary" [disabled]="pullingModel()">
+          {{ pullingModel() ? 'Pulling model…' : 'Pull Model' }}
+        </button>
+      </div>
+    </form>
+  </rd-dialog>
+</section>

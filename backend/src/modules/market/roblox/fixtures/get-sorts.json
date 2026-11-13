@@ -1,0 +1,9 @@
+{
+  "sorts": [
+    { "sortId": "top-earning", "sortDisplayName": "Top Earning" },
+    { "sortId": "top-playing-now", "sortDisplayName": "Top Playing Now" },
+    { "sortId": "up-and-coming", "sortDisplayName": "Up and Coming" },
+    { "sortId": "top-rated", "sortDisplayName": "Top Rated" }
+  ],
+  "extraField": "ignored-by-looseObject"
+}

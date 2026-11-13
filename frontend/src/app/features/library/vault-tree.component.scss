@@ -1,0 +1,68 @@
+@use 'rd';
+
+:host {
+  display: block;
+  height: 100%;
+}
+
+.tree {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.tree__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: rd.space(2.5) rd.space(3);
+  border-bottom: 1px solid rd.color('border');
+}
+
+.tree__title {
+  @include rd.section-label;
+}
+
+.tree__actions {
+  display: flex;
+  gap: rd.space(1);
+}
+
+.tree__search {
+  position: relative;
+  padding: rd.space(2) rd.space(2.5);
+  border-bottom: 1px solid rd.color('border');
+  display: flex;
+  align-items: center;
+
+  rd-icon {
+    position: absolute;
+    left: rd.space(4);
+    color: rd.color('text-3');
+    pointer-events: none;
+  }
+}
+
+.tree__search-input {
+  height: 28px;
+  padding-left: rd.space(6);
+  font-size: rd.fs('xs');
+}
+
+.tree__list {
+  flex: 1;
+  overflow-y: auto;
+  padding: rd.space(1.5) 0;
+  @include rd.scrollbar(6px);
+}
+
+.dialog-form {
+  display: grid;
+  gap: rd.space(3);
+}
+
+.dialog-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: rd.space(2);
+}

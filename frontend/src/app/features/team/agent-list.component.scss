@@ -1,0 +1,40 @@
+@use 'rd';
+
+:host {
+  display: block;
+}
+
+.agent-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.agent-list__header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 14px 16px;
+  background: #0b0c10;
+  border-bottom: 1px solid #1c1e28;
+}
+
+.agent-list__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #f3f4f6;
+}
+
+.agent-list__sub {
+  font-size: 11px;
+  color: #6b7280;
+}
+
+.agent-list__items {
+  display: flex;
+  flex-direction: column;
+}

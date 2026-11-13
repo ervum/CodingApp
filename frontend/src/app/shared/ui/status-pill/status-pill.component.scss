@@ -1,0 +1,12 @@
+@use 'sass:map';
+@use 'rd';
+
+:host {
+  display: inline-flex;
+}
+
+@each $key, $_ in rd.$status {
+  :host([data-status='#{$key}']) .pill {
+    @include rd.status-pill($key);
+  }
+}

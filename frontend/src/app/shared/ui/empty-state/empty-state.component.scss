@@ -1,0 +1,49 @@
+@use 'rd';
+
+:host {
+  display: block;
+}
+
+.empty {
+  @include rd.surface(1, 'lg');
+  padding: rd.space(8) rd.space(6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: rd.space(2);
+}
+
+.empty__icon {
+  width: 44px;
+  height: 44px;
+  border-radius: rd.radius('lg');
+  background: rd.color('bg-2');
+  border: 1px solid rd.color('border');
+  color: rd.color('text-2');
+  display: grid;
+  place-items: center;
+  margin-bottom: rd.space(1);
+}
+
+.empty__title {
+  font-size: rd.fs('base');
+  font-weight: rd.fw('semibold');
+  color: rd.color('text-1');
+}
+
+.empty__desc {
+  max-width: 420px;
+  font-size: rd.fs('sm');
+  color: rd.color('text-3');
+}
+
+.empty__actions {
+  margin-top: rd.space(2);
+  display: flex;
+  gap: rd.space(2);
+
+  &:empty {
+    display: none;
+  }
+}

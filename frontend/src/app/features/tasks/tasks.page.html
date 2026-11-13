@@ -1,0 +1,349 @@
+<div class="tasks">
+  <header class="tasks__header">
+    <div class="tasks__header-left">
+      <span class="tasks__eyebrow">WORK FOR THE AGENTS</span>
+      <h1 class="tasks__title">Tasks</h1>
+      <p class="tasks__subtitle">
+        Everything you've asked for, where it is right now, and what came back. It updates live.
+      </p>
+    </div>
+
+    <div class="tasks__toolbar">
+      <div class="tasks__view-toggle" role="group" aria-label="Task view mode">
+        <button
+          type="button"
+          class="tasks__view-btn"
+          [class.is-active]="viewMode() === 'list'"
+          (click)="viewMode.set('list')"
+        >
+          List
+        </button>
+        <button
+          type="button"
+          class="tasks__view-btn"
+          [class.is-active]="viewMode() === 'graph'"
+          (click)="viewMode.set('graph')"
+        >
+          Graph (DAG)
+        </button>
+      </div>
+
+      <select
+        class="tasks__game-select"
+        [ngModel]="store.selectedGameId()"
+        (ngModelChange)="onGameFilterChange($event)"
+        aria-label="Filter by game"
+      >
+        <option value="all">All games</option>
+        @for (g of store.games(); track g.id) {
+          <option [value]="g.id">{{ g.name }}</option>
+        }
+      </select>
+
+      <select
+        class="tasks__game-select"
+        [ngModel]="filterAgent()"
+        (ngModelChange)="filterAgent.set($event)"
+        aria-label="Filter by agent"
+      >
+        <option value="all">All agents</option>
+        @for (a of roster; track a.key) {
+          <option [value]="a.key">{{ a.name }}</option>
+        }
+      </select>
+
+      <select
+        class="tasks__game-select"
+        [ngModel]="filterPriority()"
+        (ngModelChange)="filterPriority.set($event)"
+        aria-label="Filter by priority"
+      >
+        <option value="all">All priorities</option>
+        <option value="URGENT">Urgent</option>
+        <option value="HIGH">High</option>
+        <option value="NORMAL">Normal</option>
+        <option value="LOW">Low</option>
+      </select>
+
+      <button type="button" class="task-btn task-btn--dark" (click)="openPlaybookModal()">
+        <rd-icon name="sparkles" [size]="13" />
+        <span>Run Playbook</span>
+      </button>
+
+      <button type="button" class="tasks__new-btn" (click)="openNewTask()">
+        <rd-icon name="plus" [size]="14" />
+        <span>New task</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="tasks__filter-pills" role="tablist" aria-label="Filter tasks by status">
+    @for (bucket of (['ALL', 'INBOX', 'OPEN', 'DONE', 'FAILED']); track bucket) {
+      <button
+        type="button"
+        class="tasks__filter-pill"
+        [class.is-active]="statusBucket() === bucket"
+        (click)="statusBucket.set($any(bucket))"
+      >
+        {{ bucket === 'ALL' ? 'All' : bucket === 'INBOX' ? 'Needs review' : bucket }}
+      </button>
+    }
+  </div>
+
+  @if (viewMode() === 'graph') {
+    <section class="tasks__graph-section" aria-label="Task dependency graph">
+      <div class="tasks__graph-scroll">
+        <svg
+          class="tasks__graph-svg"
+          [attr.width]="graphLayout().width"
+          [attr.height]="graphLayout().height"
+          [attr.viewBox]="'0 0 ' + graphLayout().width + ' ' + graphLayout().height"
+        >
+          @for (edge of graphLayout().edges; track edge.id) {
+            <path
+              [attr.d]="edge.pathD"
+              class="tasks__graph-edge"
+              [class.is-subtask]="edge.kind === 'subtask'"
+              fill="none"
+            />
+          }
+          @for (node of graphLayout().nodes; track node.task.id) {
+            <g
+              class="tasks__graph-node"
+              [attr.transform]="'translate(' + node.x + ',' + node.y + ')'"
+              (click)="openDrawer(node.task, $event)"
+            >
+              <rect
+                [attr.width]="node.width"
+                [attr.height]="node.height"
+                rx="10"
+                class="tasks__graph-rect"
+                [attr.data-status]="node.task.status"
+              />
+              <text x="12" y="24" class="tasks__graph-agent">
+                {{ agentFor(node.task.agentKey).name }} · {{ node.task.status }}
+              </text>
+              <text x="12" y="45" class="tasks__graph-title">
+                {{ node.task.title.length > 26 ? node.task.title.slice(0, 26) + '…' : node.task.title }}
+              </text>
+              <text x="12" y="63" class="tasks__graph-meta">
+                {{ gameNameFor(node.task.gameId) }} · {{ node.task.priority }}
+              </text>
+            </g>
+          }
+        </svg>
+      </div>
+    </section>
+  } @else {
+    <section class="tasks__section" aria-label="Needs you">
+      <header class="tasks__section-header">
+        <h2 class="tasks__section-title">Needs you</h2>
+        <rd-count-badge [count]="visibleItems().length" tone="warning" />
+      </header>
+
+      <div class="tasks__accordion">
+        @for (item of visibleItems(); track item.id) {
+          <article
+            class="task-item"
+            [class.is-expanded]="expandedTaskId() === item.id"
+          >
+            <button
+              type="button"
+              class="task-item__summary"
+              [attr.aria-expanded]="expandedTaskId() === item.id"
+              (click)="toggleRow(item)"
+            >
+              <rd-agent-avatar [agentKey]="item.agentKey" size="md" />
+
+              <div class="task-item__titles">
+                <span class="task-item__title">{{ item.title }}</span>
+                <span class="task-item__sub">
+                  {{ agentFor(item.agentKey).name }} · {{ gameNameFor(item.gameId) }} · {{ (item.completedAt ?? item.createdAt) | relativeTime }}
+                </span>
+              </div>
+
+              <span class="task-item__pill">
+                {{ item.status === 'DONE' && !item.acceptedAt ? 'Needs you' : item.status }}
+              </span>
+
+              <span class="task-item__chevron" [class.is-open]="expandedTaskId() === item.id">
+                <rd-icon name="chevron-down" [size]="14" />
+              </span>
+            </button>
+
+            @if (expandedTaskId() === item.id) {
+              <div class="task-item__panel">
+                <div class="task-item__col">
+                  <div class="task-item__col-label">WHAT WAS ASKED</div>
+                  <p class="task-item__col-body">{{ whatWasAsked(item) }}</p>
+
+                  <div class="task-item__col-actions">
+                    <button
+                      type="button"
+                      class="task-btn task-btn--good"
+                      (click)="looksGood(item, $event)"
+                    >
+                      <rd-icon name="check" [size]="13" />
+                      <span>Looks good</span>
+                    </button>
+
+                    <div class="task-item__feedback" (click)="$event.stopPropagation()">
+                      <input
+                        type="text"
+                        class="task-item__feedback-input"
+                        placeholder="Needs changes? Say what..."
+                        [ngModel]="feedbackFor(item.id)"
+                        (ngModelChange)="setFeedback(item.id, $event)"
+                        (keydown.enter)="sendFeedback(item, $event)"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div class="task-item__col">
+                  <div class="task-item__col-label">WHAT CAME BACK</div>
+                  <p class="task-item__col-body">{{ whatCameBack(item) }}</p>
+
+                  <div class="task-item__col-actions">
+                    <button
+                      type="button"
+                      class="task-btn task-btn--dark"
+                      (click)="openDrawer(item, $event)"
+                    >
+                      <rd-icon name="tasks" [size]="13" />
+                      <span>Inspect runs</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      class="task-btn task-btn--dark"
+                      (click)="openChat(item, $event)"
+                    >
+                      <rd-icon name="message-square" [size]="13" />
+                      <span>Open chat</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      class="task-btn task-btn--dark"
+                      (click)="runAgain(item, $event)"
+                    >
+                      <rd-icon name="refresh" [size]="13" />
+                      <span>Run again</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      class="task-btn task-btn--dark"
+                      (click)="stopTask(item, $event)"
+                    >
+                      <rd-icon name="stop" [size]="12" />
+                      <span>Stop</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            }
+          </article>
+        }
+      </div>
+
+      @if (nextCursor()) {
+        <div class="tasks__more">
+          <button type="button" class="task-btn task-btn--dark" (click)="loadTasks(true)">
+            Load more tasks
+          </button>
+        </div>
+      }
+    </section>
+  }
+
+  @if (drawerDetail(); as detail) {
+    <rd-task-detail-drawer
+      [detail]="detail"
+      (close)="closeDrawer()"
+      (updated)="onDrawerUpdated()"
+    />
+  }
+
+  @if (playbookModalOpen()) {
+    <div class="tasks__modal-backdrop" (click)="playbookModalOpen.set(false)">
+      <div
+        class="tasks__modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Run multi-agent playbook"
+        (click)="$event.stopPropagation()"
+      >
+        <header class="tasks__modal-header">
+          <h2 class="tasks__modal-title">Run Multi-Agent Playbook</h2>
+          <button type="button" class="task-btn task-btn--dark" (click)="playbookModalOpen.set(false)">
+            Close
+          </button>
+        </header>
+
+        <div class="tasks__modal-body">
+          <label class="tasks__field">
+            <span class="tasks__field-label">PLAYBOOK TEMPLATE</span>
+            <select
+              class="tasks__game-select"
+              [ngModel]="selectedPlaybookId()"
+              (ngModelChange)="selectedPlaybookId.set($event)"
+            >
+              @for (pb of playbooks(); track pb.id) {
+                <option [value]="pb.id">{{ pb.name }} ({{ pb.steps.length }} steps)</option>
+              }
+            </select>
+          </label>
+
+          <label class="tasks__field">
+            <span class="tasks__field-label">TARGET GAME</span>
+            <select
+              class="tasks__game-select"
+              [ngModel]="playbookGameId()"
+              (ngModelChange)="playbookGameId.set($event)"
+            >
+              <option value="all">Studio-wide (No specific game)</option>
+              @for (g of store.games(); track g.id) {
+                <option [value]="g.id">{{ g.name }}</option>
+              }
+            </select>
+          </label>
+
+          @if (selectedPlaybook(); as pb) {
+            <div class="tasks__playbook-preview">
+              <p class="tasks__playbook-desc">{{ pb.description }}</p>
+              <div class="tasks__playbook-steps">
+                @for (step of pb.steps; track step.key) {
+                  <div class="tasks__playbook-step">
+                    <rd-agent-avatar [agentKey]="step.agentKey" size="sm" />
+                    <div class="tasks__playbook-step-main">
+                      <strong>{{ step.title }}</strong>
+                      <span>
+                        {{ agentFor(step.agentKey).name }}
+                        @if (step.dependsOn.length > 0) {
+                          · waits on {{ step.dependsOn.join(', ') }}
+                        }
+                      </span>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+
+        <footer class="tasks__modal-footer">
+          <button
+            type="button"
+            class="tasks__new-btn"
+            [disabled]="runningPlaybook() || !selectedPlaybookId()"
+            (click)="launchPlaybook()"
+          >
+            {{ runningPlaybook() ? 'Launching DAG…' : 'Launch Playbook DAG' }}
+          </button>
+        </footer>
+      </div>
+    </div>
+  }
+</div>

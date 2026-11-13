@@ -1,0 +1,54 @@
+@use 'rd';
+
+:host {
+  display: block;
+  height: 100%;
+  overflow: auto;
+  @include rd.scrollbar;
+}
+
+.home {
+  max-width: rd.layout('content-max');
+  margin: 0 auto;
+  padding: 24px 32px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+
+  @include rd.respond-below('lg') {
+    padding: 20px;
+  }
+}
+
+.home__hero-card {
+  background: #12141e;
+  border: 1px solid #1f2232;
+  border-radius: 14px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.home__columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 24px;
+  align-items: start;
+
+  @include rd.respond-below('lg') {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.home__needs {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.home__live {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}

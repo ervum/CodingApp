@@ -1,0 +1,92 @@
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-card__brand">
+      <span class="auth-card__mark">RD</span>
+      <div>
+        <h1 class="rd-h2">Create account</h1>
+        <p class="rd-small">Provision your 15-agent Roblox studio</p>
+      </div>
+    </div>
+
+    @if (serverError()) {
+      <div class="auth-card__error" role="alert">{{ serverError() }}</div>
+    }
+
+    <form class="rd-stack" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <label class="rd-field">
+        <span class="rd-field__label">Display name</span>
+        <input
+          type="text"
+          class="rd-input"
+          formControlName="displayName"
+          autocomplete="name"
+          placeholder="Ervum"
+          [attr.aria-invalid]="fieldError('displayName') !== null"
+        />
+        @if (fieldError('displayName'); as err) {
+          <span class="rd-field__error">{{ err }}</span>
+        }
+      </label>
+
+      <label class="rd-field">
+        <span class="rd-field__label">Email</span>
+        <input
+          type="email"
+          class="rd-input"
+          formControlName="email"
+          autocomplete="email"
+          placeholder="founder@inclined.gg"
+          [attr.aria-invalid]="fieldError('email') !== null"
+        />
+        @if (fieldError('email'); as err) {
+          <span class="rd-field__error">{{ err }}</span>
+        }
+      </label>
+
+      <label class="rd-field">
+        <span class="rd-field__label">Password (min 10 characters)</span>
+        <input
+          type="password"
+          class="rd-input"
+          formControlName="password"
+          autocomplete="new-password"
+          placeholder="••••••••••••"
+          [attr.aria-invalid]="fieldError('password') !== null"
+        />
+        @if (fieldError('password'); as err) {
+          <span class="rd-field__error">{{ err }}</span>
+        }
+      </label>
+
+      <label class="rd-field">
+        <span class="rd-field__label">Studio name (optional)</span>
+        <input
+          type="text"
+          class="rd-input"
+          formControlName="studioName"
+          placeholder="Inclined Games"
+          [attr.aria-invalid]="fieldError('studioName') !== null"
+        />
+        @if (fieldError('studioName'); as err) {
+          <span class="rd-field__error">{{ err }}</span>
+        }
+      </label>
+
+      <button
+        type="submit"
+        class="rd-btn rd-btn--primary rd-btn--lg auth-card__submit"
+        [disabled]="submitting()"
+      >
+        @if (submitting()) {
+          <rd-spinner [size]="16" />
+        }
+        <span>Create account</span>
+      </button>
+    </form>
+
+    <p class="auth-card__footer rd-small">
+      Already have an account?
+      <a routerLink="/login" class="auth-card__link">Sign in</a>
+    </p>
+  </div>
+</div>

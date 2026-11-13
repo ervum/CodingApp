@@ -1,0 +1,97 @@
+<div class="stream-toolbar">
+  <div
+    class="stream-resizer stream-resizer--top"
+    role="separator"
+    aria-orientation="horizontal"
+    aria-label="Drag to resize stream height"
+    title="Drag up or down to resize stream (drag below 80px to collapse)"
+    (pointerdown)="startResize($event, 'top')"
+  >
+    <span class="stream-resizer__grip" aria-hidden="true"></span>
+  </div>
+
+  <div class="stream-toolbar__row" (click)="isCollapsed() && expandStream()">
+    <span class="stream-toolbar__title">
+      Stream ({{ entries().length }})
+      @if (isCollapsed()) {
+        <span class="stream-toolbar__collapsed-badge">Collapsed</span>
+      }
+    </span>
+
+    <div class="stream-toolbar__actions">
+      @if (streamHeightPx() !== null && !isCollapsed()) {
+        <button
+          type="button"
+          class="stream-toolbar__btn"
+          title="Reset stream height to fill available space"
+          (click)="resetStreamHeight($event)"
+        >
+          Reset height
+        </button>
+      }
+      <button
+        type="button"
+        class="stream-toolbar__btn stream-toolbar__btn--primary"
+        (click)="$event.stopPropagation(); toggleCollapse()"
+      >
+        {{ isCollapsed() ? 'Expand stream ▴' : 'Collapse ▾' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+@if (!isCollapsed()) {
+  <div
+    #streamContainer
+    class="stream"
+    [style.height.px]="streamHeightPx()"
+    [attr.aria-live]="streamingEntryId() ? 'off' : 'polite'"
+    (scroll)="onScroll()"
+  >
+    @if (entries().length === 0) {
+      <div class="stream__empty">Waiting for the first token…</div>
+    } @else {
+      <div class="stream__entries">
+        @for (entry of entries(); track entry.id) {
+          <rd-log-entry
+            [entry]="entry"
+            [streaming]="streamingEntryId() === entry.id"
+            (wikilinkClick)="wikilinkClick.emit($event)"
+          />
+        }
+      </div>
+    }
+
+    @if (artifacts().length > 0) {
+      <section class="stream__artifacts" aria-label="Saved run artifacts">
+        <h4 class="stream__artifacts-title">SAVED ARTIFACTS ({{ artifacts().length }})</h4>
+        @for (art of artifacts(); track art.id) {
+          <details class="artifact" open>
+            <summary class="artifact__header">
+              <span class="artifact__path">{{ art.path }}</span>
+              <span class="artifact__meta">{{ art.language }} · {{ art.bytes | bytes }}</span>
+            </summary>
+            <pre class="artifact__code" [attr.data-lang]="art.language"><code [innerHTML]="highlightArtifact(art)"></code></pre>
+          </details>
+        }
+      </section>
+    }
+
+    @if (!isStuckToBottom()) {
+      <button type="button" class="stream__jump" (click)="jumpToLive()">
+        Jump to live ↓
+      </button>
+    }
+  </div>
+
+  <div
+    class="stream-resizer stream-resizer--bottom"
+    role="separator"
+    aria-orientation="horizontal"
+    aria-label="Drag bottom edge to resize stream height"
+    title="Drag up or down to resize stream (drag below 80px to collapse)"
+    (pointerdown)="startResize($event, 'bottom')"
+  >
+    <span class="stream-resizer__grip" aria-hidden="true"></span>
+  </div>
+}

@@ -1,0 +1,16 @@
+{
+  "data": [
+    {
+      "id": 994732206,
+      "rootPlaceId": 2753915549,
+      "name": "Blox Fruits",
+      "creator": { "name": "Gamer Robot Inc", "type": "Group" },
+      "playing": 312400,
+      "visits": 42100000000,
+      "favoritedCount": 14800000,
+      "maxPlayers": 12,
+      "genre_l1": "RPG",
+      "genre_l2": "Action RPG"
+    }
+  ]
+}

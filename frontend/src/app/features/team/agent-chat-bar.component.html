@@ -1,0 +1,476 @@
+<div class="chat-bar-wrap" [class.is-wide]="wide()">
+  <input
+    #fileInput
+    type="file"
+    multiple
+    hidden
+    (change)="onFilesSelected($event)"
+  />
+  <input
+    #folderInput
+    type="file"
+    webkitdirectory
+    multiple
+    hidden
+    (change)="onFolderSelected($event)"
+  />
+
+  @if (directives().length > 0 || attachments().length > 0) {
+    <div class="chat-bar__chips" aria-label="Attached context and directives">
+      @for (dir of directives(); track dir) {
+        <span class="chat-chip chat-chip--directive">
+          <rd-icon [name]="directiveMetadata[dir].icon" [size]="11" />
+          <span class="chat-chip__cmd">{{ directiveMetadata[dir].command }}</span>
+          <span class="chat-chip__sub">{{ directiveMetadata[dir].label }}</span>
+          <button
+            type="button"
+            class="chat-chip__remove"
+            [attr.aria-label]="'Remove ' + directiveMetadata[dir].command"
+            (click)="removeDirective(dir, $event)"
+          >
+            <rd-icon name="x" [size]="10" />
+          </button>
+        </span>
+      }
+
+      @for (att of attachments(); track attachmentKey(att); let idx = $index) {
+        <span class="chat-chip chat-chip--attachment" [attr.data-kind]="att.kind">
+          @if (att.kind === 'image' && att.previewUrl) {
+            <img class="chat-chip__thumb" [src]="att.previewUrl" [alt]="att.name" />
+          } @else {
+            <rd-icon [name]="attachmentIcon(att)" [size]="11" />
+          }
+          <span class="chat-chip__label">{{ attachmentLabel(att) }}</span>
+          <button
+            type="button"
+            class="chat-chip__remove"
+            [attr.aria-label]="'Remove ' + attachmentLabel(att)"
+            (click)="removeAttachment(idx, $event)"
+          >
+            <rd-icon name="x" [size]="10" />
+          </button>
+        </span>
+      }
+    </div>
+  }
+
+  <div class="chat-bar">
+    <!-- + / Clip Button & Popover -->
+    <div class="chat-bar__plus-wrap">
+      <button
+        type="button"
+        class="chat-bar__plus-btn"
+        [class.is-open]="plusMenuOpen()"
+        [disabled]="disabled() || uploadingBusy()"
+        aria-label="Add files, folders, actions, or context"
+        title="Add files, folders, /actions, or @context"
+        (click)="togglePlusMenu($event)"
+      >
+        <rd-icon name="plus" [size]="15" />
+      </button>
+
+      @if (plusMenuOpen()) {
+        <div
+          class="chat-bar__plus-popover"
+          role="menu"
+          aria-label="Add to chat"
+          (click)="$event.stopPropagation()"
+        >
+          <button
+            type="button"
+            class="plus-menu__item"
+            role="menuitem"
+            (click)="onPlusPickFiles($event)"
+          >
+            <rd-icon name="file-text" [size]="14" />
+            <div class="plus-menu__item-text">
+              <span class="plus-menu__item-title">Files</span>
+              <span class="plus-menu__item-sub">Attach files or images from your computer</span>
+            </div>
+          </button>
+
+          <div class="plus-menu__Subwrap">
+            <button
+              type="button"
+              class="plus-menu__item"
+              role="menuitem"
+              [class.is-active]="plusFoldersSubmenuOpen()"
+              [attr.aria-expanded]="plusFoldersSubmenuOpen()"
+              (click)="togglePlusFoldersSubmenu($event)"
+            >
+              <rd-icon name="folder" [size]="14" />
+              <div class="plus-menu__item-text">
+                <span class="plus-menu__item-title">Folders</span>
+                <span class="plus-menu__item-sub">Link a local folder or upload a copy</span>
+              </div>
+              <rd-icon name="chevron-right" [size]="12" />
+            </button>
+
+            @if (plusFoldersSubmenuOpen()) {
+              <div class="plus-menu__submenu" role="menu" aria-label="Folder options">
+                <button
+                  type="button"
+                  class="plus-menu__item"
+                  role="menuitem"
+                  (click)="onPlusLinkLocalFolder($event)"
+                >
+                  <rd-icon name="folder-open" [size]="14" />
+                  <div class="plus-menu__item-text">
+                    <span class="plus-menu__item-title">Link local folder (no copy)</span>
+                    <span class="plus-menu__item-sub">Native OS picker · read-only agent access</span>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  class="plus-menu__item"
+                  role="menuitem"
+                  (click)="onPlusUploadFolderCopy($event)"
+                >
+                  <rd-icon name="upload" [size]="14" />
+                  <div class="plus-menu__item-text">
+                    <span class="plus-menu__item-title">Upload folder copy</span>
+                    <span class="plus-menu__item-sub">Copies folder contents into .chat-uploads</span>
+                  </div>
+                </button>
+              </div>
+            }
+          </div>
+
+          <div class="plus-menu__divider"></div>
+
+          <button
+            type="button"
+            class="plus-menu__item"
+            role="menuitem"
+            (click)="onPlusActions($event)"
+          >
+            <rd-icon name="slash" [size]="14" />
+            <div class="plus-menu__item-text">
+              <span class="plus-menu__item-title">Actions</span>
+              <span class="plus-menu__item-sub">Write / and browse slash commands</span>
+            </div>
+            <span class="plus-menu__kbd">/</span>
+          </button>
+
+          <button
+            type="button"
+            class="plus-menu__item"
+            role="menuitem"
+            (click)="onPlusContext($event)"
+          >
+            <rd-icon name="at-sign" [size]="14" />
+            <div class="plus-menu__item-text">
+              <span class="plus-menu__item-title">Context</span>
+              <span class="plus-menu__item-sub">Write &#64; to attach Vault rules, files &amp; info</span>
+            </div>
+            <span class="plus-menu__kbd">&#64;</span>
+          </button>
+        </div>
+      }
+    </div>
+
+    <!-- @ Context Mention Popover -->
+    @if (mentionMenuOpen()) {
+      <div
+        class="chat-bar__suggest-popover"
+        role="listbox"
+        aria-label="Context mentions"
+        (click)="$event.stopPropagation()"
+      >
+        <div class="suggest-popover__head">
+          <span>&#64; Context — Vault Rules, Workspace Files &amp; Project Info</span>
+          <span class="suggest-popover__hint">↑↓ navigate · Enter select · Esc close</span>
+        </div>
+
+        @if (mentionLoading() && mentionItems().length === 0) {
+          <div class="suggest-popover__empty">Searching studio context...</div>
+        } @else if (mentionItems().length === 0) {
+          <div class="suggest-popover__empty">No matching Vault rules, workspace files, or games.</div>
+        } @else {
+          <div class="suggest-popover__list">
+            @for (item of mentionItems(); track (item.id || item.label); let idx = $index) {
+              <button
+                type="button"
+                class="suggest-item"
+                role="option"
+                [class.is-active]="activePopoverIndex() === idx"
+                [attr.aria-selected]="activePopoverIndex() === idx"
+                (mouseenter)="activePopoverIndex.set(idx)"
+                (click)="selectMentionItem(item, $event)"
+              >
+                <rd-icon [name]="attachmentIcon(item.attachment)" [size]="13" />
+                <div class="suggest-item__body">
+                  <span class="suggest-item__label">{{ item.label }}</span>
+                  <span class="suggest-item__sub">{{ item.sublabel || item.detail }}</span>
+                </div>
+              </button>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <!-- / Slash Command Popover -->
+    @if (slashMenuOpen()) {
+      <div
+        class="chat-bar__suggest-popover"
+        role="listbox"
+        aria-label="Slash commands"
+        (click)="$event.stopPropagation()"
+      >
+        <div class="suggest-popover__head">
+          <span>/ Commands &amp; Actions</span>
+          <span class="suggest-popover__hint">↑↓ navigate · Enter select · Esc close</span>
+        </div>
+
+        @if (filteredSlashCommands().length === 0) {
+          <div class="suggest-popover__empty">No matching command.</div>
+        } @else {
+          <div class="suggest-popover__list">
+            @for (cmd of filteredSlashCommands(); track cmd.command; let idx = $index) {
+              <button
+                type="button"
+                class="suggest-item"
+                role="option"
+                [class.is-active]="activePopoverIndex() === idx"
+                [attr.aria-selected]="activePopoverIndex() === idx"
+                (mouseenter)="activePopoverIndex.set(idx)"
+                (click)="selectSlashCommand(cmd, $event)"
+              >
+                <rd-icon [name]="cmd.icon" [size]="13" />
+                <div class="suggest-item__body">
+                  <div class="suggest-item__top">
+                    <span class="suggest-item__cmd">{{ cmd.command }}</span>
+                    <span class="suggest-item__label">{{ cmd.label }}</span>
+                  </div>
+                  <span class="suggest-item__sub">{{ cmd.description }}</span>
+                </div>
+              </button>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <textarea
+      #chatTextarea
+      class="chat-bar__input"
+      rows="1"
+      rdAutosize
+      [maxRows]="6"
+      [placeholder]="placeholder()"
+      [disabled]="disabled()"
+      [ngModel]="text()"
+      (ngModelChange)="onTextChange($event)"
+      (keydown)="onKeydown($event)"
+      (paste)="onPaste($event)"
+      [attr.aria-label]="placeholder()"
+    ></textarea>
+
+    <div class="chat-bar__controls">
+      <div class="chat-bar__model-wrap">
+        <button
+          type="button"
+          class="chat-bar__model-btn"
+          [class.is-open]="menuOpen()"
+          [disabled]="disabled()"
+          (click)="toggleMenu()"
+          [attr.title]="'Change model & options for ' + agentName() + ' only'"
+        >
+          <rd-icon name="sparkles" [size]="12" />
+          <span class="chat-bar__model-label">{{ currentModelLabel() }}</span>
+          <rd-icon name="chevron-down" [size]="11" />
+        </button>
+
+        @if (menuOpen()) {
+          <div class="chat-bar__popover" role="dialog" [attr.aria-label]="agentName() + ' model options'">
+            <div class="chat-bar__popover-head">
+              <div>
+                <div class="chat-bar__popover-title">{{ agentName() }} · Model &amp; Options</div>
+                <div class="chat-bar__popover-sub">Applies only to {{ agentName() }}'s chat</div>
+              </div>
+              <button
+                type="button"
+                class="chat-bar__popover-close"
+                (click)="menuOpen.set(false)"
+                aria-label="Close model options"
+              >
+                <rd-icon name="x" [size]="13" />
+              </button>
+            </div>
+
+            <div class="chat-bar__popover-section">
+              <label class="chat-bar__popover-label">Model</label>
+              <select
+                class="chat-bar__select"
+                aria-label="Select model"
+                [ngModel]="modelConfig().baseModel"
+                (ngModelChange)="onBaseModelChange($event)"
+              >
+                <optgroup label="Gemini Web (gemini.google.com)">
+                  @for (m of webBaseModels; track m.id) {
+                    @if (m.group === 'Gemini Web') {
+                      <option [value]="m.id">{{ m.label }}</option>
+                    }
+                  }
+                </optgroup>
+                <optgroup label="Gemini Web · Guest Mode (No Login)">
+                  @for (m of webBaseModels; track m.id) {
+                    @if (m.group === 'Gemini Web (Guest)') {
+                      <option [value]="m.id">{{ m.label }}</option>
+                    }
+                  }
+                </optgroup>
+                <optgroup label="Google AI Studio (aistudio.google.com)">
+                  @for (m of webBaseModels; track m.id) {
+                    @if (m.group === 'Google AI Studio') {
+                      <option [value]="m.id">{{ m.label }}</option>
+                    }
+                  }
+                </optgroup>
+                <optgroup label="Antigravity (IDE / Agent CLI)">
+                  @for (m of webBaseModels; track m.id) {
+                    @if (m.group === 'Antigravity') {
+                      <option [value]="m.id">{{ m.label }}</option>
+                    }
+                  }
+                </optgroup>
+                <optgroup label="Claude Code (CLI Agent)">
+                  @for (m of webBaseModels; track m.id) {
+                    @if (m.group === 'Claude Code') {
+                      <option [value]="m.id">{{ m.label }}</option>
+                    }
+                  }
+                </optgroup>
+                <optgroup label="OpenAI Codex (CLI Agent)">
+                  @for (m of webBaseModels; track m.id) {
+                    @if (m.group === 'Codex') {
+                      <option [value]="m.id">{{ m.label }}</option>
+                    }
+                  }
+                </optgroup>
+                <optgroup label="Gemini Desktop App">
+                  @for (m of webBaseModels; track m.id) {
+                    @if (m.group === 'Gemini App') {
+                      <option [value]="m.id">{{ m.label }}</option>
+                    }
+                  }
+                </optgroup>
+                <optgroup label="Claude Desktop App">
+                  @for (m of webBaseModels; track m.id) {
+                    @if (m.group === 'Claude App') {
+                      <option [value]="m.id">{{ m.label }}</option>
+                    }
+                  }
+                </optgroup>
+                <optgroup label="ChatGPT Desktop App (GPT App)">
+                  @for (m of webBaseModels; track m.id) {
+                    @if (m.group === 'GPT App') {
+                      <option [value]="m.id">{{ m.label }}</option>
+                    }
+                  }
+                </optgroup>
+                <optgroup label="Claude Web (claude.ai)">
+                  @for (m of webBaseModels; track m.id) {
+                    @if (m.group === 'Claude Web') {
+                      <option [value]="m.id">{{ m.label }}</option>
+                    }
+                  }
+                </optgroup>
+                <optgroup label="ChatGPT Web (chatgpt.com)">
+                  @for (m of webBaseModels; track m.id) {
+                    @if (m.group === 'ChatGPT Web') {
+                      <option [value]="m.id">{{ m.label }}</option>
+                    }
+                  }
+                </optgroup>
+              </select>
+            </div>
+
+            @if (!isGuestWebModel()) {
+              <div class="chat-bar__popover-section">
+                <label class="chat-bar__popover-label">Thinking Level</label>
+                <div class="chat-bar__pill-group">
+                  @for (d of thinkingLevels; track d.id) {
+                    <button
+                      type="button"
+                      class="chat-bar__option-pill"
+                      [class.is-active]="modelConfig().thinkingLevel === d.id"
+                      (click)="onThinkingChange(d.id)"
+                    >
+                      {{ d.shortLabel }}
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+
+            @if (isAiStudioModel()) {
+              <div class="chat-bar__popover-section">
+                <label class="chat-bar__popover-label">Media Resolution</label>
+                <div class="chat-bar__pill-group">
+                  @for (res of mediaResolutions; track res.id) {
+                    <button
+                      type="button"
+                      class="chat-bar__option-pill"
+                      [class.is-active]="modelConfig().mediaResolution === res.id"
+                      (click)="onMediaResolutionChange(res.id)"
+                    >
+                      {{ res.shortLabel }}
+                    </button>
+                  }
+                </div>
+              </div>
+
+              <div class="chat-bar__popover-section">
+                <label class="chat-bar__popover-label">AI Studio Tools</label>
+                <div class="chat-bar__tool-grid">
+                  @for (t of aiStudioToolOptions; track t.id) {
+                    <button
+                      type="button"
+                      class="chat-bar__tool-pill"
+                      [class.is-active]="hasTool(t.id)"
+                      [title]="t.fullLabel"
+                      (click)="onToggleTool(t.id)"
+                    >
+                      {{ t.shortLabel }}
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+
+            <div class="chat-bar__popover-section">
+              <label class="chat-bar__popover-label">Web Chat Session Mode</label>
+              <select
+                class="chat-bar__select"
+                aria-label="Create new chat mode"
+                [ngModel]="modelConfig().createNewChatMode"
+                (ngModelChange)="onCreateNewChatModeChange($event)"
+              >
+                @for (opt of createNewChatOptions; track opt.id) {
+                  <option [value]="opt.id" [title]="opt.description">{{ opt.label }}</option>
+                }
+              </select>
+            </div>
+          </div>
+        }
+      </div>
+
+      <button
+        type="button"
+        class="chat-bar__send"
+        [disabled]="!canSend()"
+        (click)="submit()"
+      >
+        <rd-icon name="send" [size]="13" />
+        <span>{{ uploadingBusy() ? 'Adding...' : 'Send' }}</span>
+      </button>
+    </div>
+  </div>
+  @if (wide()) {
+    <div class="chat-bar__hint">
+      Enter to send · Shift+Enter for new line · &#64; for context · / for commands · + to attach files/folders
+    </div>
+  }
+</div>

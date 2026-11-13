@@ -1,0 +1,74 @@
+<div class="switcher">
+  <button
+    type="button"
+    class="switcher__trigger"
+    [attr.aria-expanded]="menuOpen()"
+    (click)="toggleMenu()"
+  >
+    <span class="switcher__mark" aria-hidden="true">
+      <rd-icon name="sparkles" [size]="16" />
+    </span>
+    <span class="switcher__titles">
+      <span class="switcher__title">RoAutomation</span>
+      <span class="switcher__subtitle">Your AI game studio</span>
+    </span>
+  </button>
+
+  @if (menuOpen()) {
+    <div class="switcher__backdrop" (click)="closeMenu()"></div>
+    <div class="switcher__menu" role="menu">
+      <div class="switcher__section">Studios</div>
+      @for (m of auth.memberships(); track m.studioId) {
+        <button
+          type="button"
+          role="menuitem"
+          class="switcher__item"
+          [class.is-active]="store.studio()?.id === m.studioId"
+          (click)="switchStudio(m.studioSlug)"
+        >
+          <span class="switcher__item-name">{{ m.workspaceLabel }}</span>
+          <span class="switcher__item-role">{{ m.role }}</span>
+        </button>
+      }
+      <hr class="rd-divider" />
+      <button type="button" role="menuitem" class="switcher__item" (click)="openCreateDialog()">
+        <rd-icon name="plus" [size]="14" />
+        <span>Create studio…</span>
+      </button>
+      <button type="button" role="menuitem" class="switcher__item" (click)="logout()">
+        <rd-icon name="logout" [size]="14" />
+        <span>Sign out</span>
+      </button>
+    </div>
+  }
+</div>
+
+<rd-dialog [(open)]="createOpen" title="Create studio" width="420px">
+  <form class="rd-stack" (ngSubmit)="createStudio()">
+    <label class="rd-field">
+      <span class="rd-field__label">Studio name</span>
+      <input
+        type="text"
+        class="rd-input"
+        name="studioName"
+        placeholder="e.g. Nova Arcade"
+        [ngModel]="newStudioName()"
+        (ngModelChange)="newStudioName.set($event)"
+        required
+      />
+    </label>
+    <div class="rd-row">
+      <span class="rd-spacer"></span>
+      <button type="button" class="rd-btn rd-btn--ghost" (click)="createOpen.set(false)">
+        Cancel
+      </button>
+      <button
+        type="submit"
+        class="rd-btn rd-btn--primary"
+        [disabled]="creating() || newStudioName().trim().length < 2"
+      >
+        Create studio
+      </button>
+    </div>
+  </form>
+</rd-dialog>

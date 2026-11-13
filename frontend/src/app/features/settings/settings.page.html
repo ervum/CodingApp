@@ -1,0 +1,13 @@
+<div class="settings">
+  <header class="settings__header">
+    <h1 class="settings__title">Studio Settings</h1>
+    <p class="rd-text-muted">
+      Configure encrypted LLM provider connections, per-agent model bindings, MCP server tools, and studio members.
+    </p>
+  </header>
+
+  <rd-model-connections (connectionsChanged)="connections.set($event)" />
+  <rd-agent-model-bindings [connections]="connections()" />
+  <rd-mcp-server-panel />
+  <rd-members />
+</div>

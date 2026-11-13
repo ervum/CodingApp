@@ -1,0 +1,58 @@
+@use 'rd';
+
+:host {
+  display: block;
+  padding: 10px 14px 14px;
+  border-top: 1px solid #1C1E28;
+}
+
+.runner-footer {
+  display: grid;
+  gap: 8px;
+}
+
+.runner-footer__label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6B7280;
+}
+
+.runner-footer__toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 2px;
+  border-radius: 8px;
+  background: #12141D;
+  border: 1px solid #222533;
+}
+
+.runner-footer__pill {
+  height: 24px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #6B7280;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
+
+  &.is-active {
+    background: #1F2233;
+    color: #F3F4F6;
+  }
+}
+
+.runner-footer__status {
+  font-size: 11px;
+  color: #6B7280;
+  text-decoration: none;
+
+  &:hover {
+    color: #9CA3AF;
+  }
+}

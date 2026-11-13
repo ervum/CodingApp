@@ -1,0 +1,42 @@
+@use 'rd';
+
+:host {
+  display: inline-block;
+}
+
+.tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: rd.space(1);
+  padding: rd.space(1);
+  background: rd.color('bg-1');
+  border: 1px solid rd.color('border');
+  border-radius: rd.radius('lg');
+}
+
+.tabs__tab {
+  display: inline-flex;
+  align-items: center;
+  gap: rd.space(2);
+  height: 30px;
+  padding: 0 rd.space(3);
+  border-radius: rd.radius('md');
+  font-size: rd.fs('md');
+  font-weight: rd.fw('medium');
+  color: rd.color('text-2');
+  cursor: pointer;
+  transition:
+    background-color rd.dur('fast') rd.ease('standard'),
+    color rd.dur('fast') rd.ease('standard');
+  @include rd.focus-ring(-2px);
+
+  &:hover {
+    color: rd.color('text-1');
+  }
+
+  &.is-active {
+    background: rd.color('bg-3');
+    color: rd.color('text-1');
+    box-shadow: inset 0 0 0 1px rd.color('border-strong');
+  }
+}

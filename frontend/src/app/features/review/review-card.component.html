@@ -1,0 +1,42 @@
+<button
+  type="button"
+  class="review-card"
+  [class.is-selected]="selected()"
+  [class.review-card--stage]="isStage()"
+  (click)="open.emit(item().id)"
+>
+  @if (!isStage() && item().media; as media) {
+    <div
+      class="review-card__thumb"
+      [class.review-card__thumb--square]="isSquare()"
+      [class.review-card__thumb--wide]="!isSquare()"
+    >
+      <img [src]="media.url" [alt]="item().title" loading="lazy" />
+      <span class="review-card__kind-badge">{{ item().kind }}</span>
+    </div>
+  }
+
+  <div class="review-card__body">
+    <div class="review-card__top">
+      <span class="review-card__title">{{ item().title }}</span>
+      <span class="review-card__iter">v{{ item().iteration }}</span>
+    </div>
+
+    <div class="review-card__footer">
+      <div class="review-card__agent">
+        <rd-agent-avatar [agent]="agentInfo()" size="xs" [showStatus]="false" />
+        <span>{{ agentInfo().name }}</span>
+      </div>
+
+      <div class="review-card__pills">
+        @if (item().openFixFirst > 0) {
+          <rd-status-pill
+            status="FIX_FIRST"
+            [label]="'FIX FIRST ×' + item().openFixFirst"
+          />
+        }
+        <rd-status-pill [status]="item().status" />
+      </div>
+    </div>
+  </div>
+</button>

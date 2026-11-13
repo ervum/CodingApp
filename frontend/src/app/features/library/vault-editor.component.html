@@ -1,0 +1,91 @@
+<div class="editor__toolbar">
+  <input
+    type="text"
+    class="editor__title-input"
+    [readonly]="readonly()"
+    [ngModel]="title()"
+    (ngModelChange)="title.set($event)"
+    aria-label="Document title"
+  />
+
+  <div class="editor__ToolbarRight">
+    <span class="editor__status" [attr.data-state]="saveState()">
+      {{ saveLabel() }}
+    </span>
+
+    @if (!readonly()) {
+      <button
+        type="button"
+        class="rd-btn rd-btn--ghost rd-btn--sm"
+        [disabled]="saveState() !== 'dirty' && saveState() !== 'error'"
+        (click)="save.emit()"
+        title="Save now (Ctrl+S)"
+      >
+        Save
+      </button>
+    }
+
+    <div class="editor__modes" role="group" aria-label="View mode">
+      <button
+        type="button"
+        class="editor__mode-btn"
+        [class.is-active]="mode() === 'view'"
+        (click)="mode.set('view')"
+      >
+        View
+      </button>
+      <button
+        type="button"
+        class="editor__mode-btn"
+        [class.is-active]="mode() === 'split'"
+        (click)="mode.set('split')"
+      >
+        Split
+      </button>
+      <button
+        type="button"
+        class="editor__mode-btn"
+        [class.is-active]="mode() === 'edit'"
+        (click)="mode.set('edit')"
+      >
+        Edit
+      </button>
+    </div>
+  </div>
+</div>
+
+@if (saveState() === 'conflict') {
+  <div class="editor__conflict" role="alert">
+    <rd-icon name="alert-triangle" [size]="15" />
+    <span>
+      This doc changed elsewhere (v{{ conflictVersion() ?? version() + 1 }}).
+    </span>
+    <div class="editor__conflict-actions">
+      <button
+        type="button"
+        class="rd-btn rd-btn--primary rd-btn--sm"
+        (click)="resolveConflict.emit('mine')"
+      >
+        Keep mine
+      </button>
+      <button
+        type="button"
+        class="rd-btn rd-btn--secondary rd-btn--sm"
+        (click)="resolveConflict.emit('theirs')"
+      >
+        Use theirs
+      </button>
+    </div>
+  </div>
+}
+
+<textarea
+  class="editor__textarea"
+  rdTabIndent
+  spellcheck="false"
+  [readonly]="readonly()"
+  [ngModel]="text()"
+  (ngModelChange)="text.set($event)"
+  (keydown)="onKeydown($event)"
+  aria-label="Markdown document editor"
+></textarea>

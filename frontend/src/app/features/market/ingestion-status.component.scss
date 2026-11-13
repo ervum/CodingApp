@@ -1,0 +1,63 @@
+@use 'rd';
+
+:host {
+  display: block;
+}
+
+.ingest {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: rd.space(3);
+  padding: rd.space(2.5) rd.space(4);
+  background: rd.color('bg-1');
+  border: 1px solid rd.color('border');
+  border-radius: rd.radius('md');
+
+  &--warn {
+    background: rd.color('warning-soft');
+    border-color: rd.color('warning');
+  }
+}
+
+.ingest__status {
+  display: flex;
+  align-items: center;
+  gap: rd.space(2);
+  font-size: rd.fs('sm');
+  color: rd.color('text-2');
+}
+
+.ingest__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+
+  &--live {
+    @include rd.glow-indicator(rd.raw-color('success'), 8px, false);
+  }
+
+  &--seed {
+    background: rd.color('text-3');
+  }
+}
+
+.ingest__text--warn {
+  color: rd.color('warning');
+  font-weight: rd.fw('medium');
+}
+
+.ingest__right {
+  display: flex;
+  align-items: center;
+  gap: rd.space(3);
+}
+
+.ingest__meta {
+  font-family: var(--rd-font-mono);
+  font-size: rd.fs('xs');
+  color: rd.color('text-3');
+  @include rd.numeric;
+}

@@ -1,0 +1,58 @@
+<button
+  type="button"
+  class="rd-btn rd-btn--ghost rd-btn--icon context__menu-btn"
+  aria-label="Open navigation menu"
+  (click)="toggleMobileMenu.emit()"
+>
+  <rd-icon name="grid" [size]="16" />
+</button>
+
+<div class="context__title">{{ viewTitle() }}</div>
+
+<div class="context__actions">
+  <span class="context__sample-pill">
+    <span class="context__sample-dot"></span>
+    <span>Sample project · Illustrative data</span>
+  </span>
+
+  <button
+    type="button"
+    class="context__btn"
+    [disabled]="busy()"
+    (click)="refresh()"
+  >
+    <rd-icon name="refresh" [size]="13" />
+    <span>Refresh</span>
+  </button>
+
+  <button
+    type="button"
+    class="context__btn context__btn--new"
+    (click)="openNewTask.emit()"
+  >
+    <rd-icon name="plus" [size]="13" />
+    <span>New task</span>
+  </button>
+</div>
+
+<rd-dialog [(open)]="confirmPauseOpen" title="Pause all agents?" width="440px">
+  <div class="rd-stack">
+    <p class="rd-body">
+      Pause all agents? Running work stops and resumes later.
+    </p>
+    <div class="rd-row">
+      <span class="rd-spacer"></span>
+      <button type="button" class="rd-btn rd-btn--ghost" (click)="confirmPauseOpen.set(false)">
+        Cancel
+      </button>
+      <button
+        type="button"
+        class="rd-btn rd-btn--warning"
+        [disabled]="busy()"
+        (click)="confirmPauseAll()"
+      >
+        Pause all
+      </button>
+    </div>
+  </div>
+</rd-dialog>

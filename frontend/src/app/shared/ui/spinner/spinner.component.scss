@@ -1,0 +1,15 @@
+@use 'rd';
+
+:host {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.spinner {
+  display: inline-block;
+  border-radius: 50%;
+  border: 2px solid rd.color('border-strong');
+  border-top-color: rd.color('neon');
+  animation: rd-spin 0.7s linear infinite;
+}

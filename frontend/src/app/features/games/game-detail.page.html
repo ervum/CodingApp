@@ -1,0 +1,224 @@
+<div class="game-detail">
+  @if (!detail()) {
+    <rd-empty-state
+      icon="games"
+      title="Loading game detail…"
+      description="Fetching milestones and build history."
+    />
+  } @else {
+    @if (detail(); as g) {
+      <header class="game-detail__header" [style.--game-accent]="g.accentColor">
+        <div class="game-detail__title-row">
+          <div class="game-detail__identity">
+            <span class="game-detail__dot"></span>
+            <h1 class="game-detail__title">{{ g.name }}</h1>
+            <span class="game-detail__genre">{{ g.genre }}</span>
+            <rd-status-pill [status]="g.status" />
+          </div>
+          <div class="game-detail__links">
+            <a
+              class="rd-btn rd-btn--secondary rd-btn--sm"
+              [routerLink]="['/s', studioSlug(), 'review']"
+              (click)="store.selectGame(g.id)"
+            >
+              <span>Review items</span>
+            </a>
+            <a
+              class="rd-btn rd-btn--secondary rd-btn--sm"
+              [routerLink]="['/s', studioSlug(), 'tasks']"
+              (click)="store.selectGame(g.id)"
+            >
+              <span>Tasks</span>
+            </a>
+            @if (g.playUrl) {
+              <a
+                class="rd-btn rd-btn--primary rd-btn--sm"
+                [href]="g.playUrl"
+                target="_blank"
+                rel="noopener"
+              >
+                <rd-icon name="play" [size]="14" />
+                <span>Play on Roblox</span>
+              </a>
+            }
+          </div>
+        </div>
+        <p class="game-detail__desc">{{ g.description }}</p>
+      </header>
+
+      @if (store.canEdit()) {
+        <section class="game-detail__card" aria-label="Game configuration">
+          <h2 class="game-detail__section-title">CONFIGURATION & ROBLOX IDS</h2>
+          <div class="game-detail__config-grid">
+            <div class="rd-field">
+              <label class="rd-label">Stage</label>
+              <select
+                class="rd-select"
+                [ngModel]="status()"
+                (ngModelChange)="status.set($event)"
+              >
+                <option value="CONCEPT">CONCEPT</option>
+                <option value="BLUEPRINT">BLUEPRINT</option>
+                <option value="BUILDING">BUILDING</option>
+                <option value="TESTING">TESTING</option>
+                <option value="LIVE">LIVE</option>
+                <option value="PAUSED">PAUSED</option>
+              </select>
+            </div>
+            <div class="rd-field">
+              <label class="rd-label">Accent Hex</label>
+              <input
+                type="text"
+                class="rd-input"
+                [ngModel]="accentColor()"
+                (ngModelChange)="accentColor.set($event)"
+              />
+            </div>
+            <div class="rd-field">
+              <label class="rd-label">Roblox Universe ID</label>
+              <input
+                type="text"
+                class="rd-input"
+                placeholder="e.g. 5819201441"
+                [ngModel]="robloxUniverseId()"
+                (ngModelChange)="robloxUniverseId.set($event)"
+              />
+            </div>
+            <div class="rd-field">
+              <label class="rd-label">Roblox Place ID</label>
+              <input
+                type="text"
+                class="rd-input"
+                placeholder="e.g. 16901283910"
+                [ngModel]="robloxPlaceId()"
+                (ngModelChange)="robloxPlaceId.set($event)"
+              />
+            </div>
+          </div>
+          <div class="game-detail__config-actions">
+            <button
+              type="button"
+              class="rd-btn rd-btn--primary rd-btn--sm"
+              [disabled]="saving()"
+              (click)="saveSettings()"
+            >
+              <span>Save settings</span>
+            </button>
+            <button
+              type="button"
+              class="rd-btn rd-btn--secondary rd-btn--sm"
+              [disabled]="publishing()"
+              (click)="publishViaOpenCloud()"
+            >
+              <rd-icon name="sparkles" [size]="13" />
+              <span>{{ publishing() ? 'Publishing…' : 'Publish to Roblox (Open Cloud)' }}</span>
+            </button>
+          </div>
+        </section>
+      }
+
+      <div class="game-detail__columns">
+        <section class="game-detail__card" aria-label="Milestones">
+          <div class="game-detail__card-head">
+            <h2 class="game-detail__section-title">
+              MILESTONES ({{ g.milestonesDone }}/{{ g.milestonesTotal }})
+            </h2>
+            <span class="game-detail__mono">{{ g.progressPct }}%</span>
+          </div>
+          <rd-progress-bar [value]="g.progressPct" [accent]="g.accentColor" />
+          <div class="game-detail__milestones">
+            @for (m of g.milestones; track m.id) {
+              <label class="milestone-row">
+                <input
+                  type="checkbox"
+                  [checked]="m.status === 'DONE'"
+                  [disabled]="!store.canEdit()"
+                  (change)="toggleMilestone(m)"
+                />
+                <span class="milestone-row__title" [class.is-done]="m.status === 'DONE'">
+                  {{ m.title }}
+                </span>
+                <rd-status-pill [status]="m.status === 'DONE' ? 'DONE' : m.status === 'IN_PROGRESS' ? 'RUNNING' : 'QUEUED'" [label]="m.status" />
+              </label>
+            }
+          </div>
+        </section>
+
+        <section class="game-detail__card" aria-label="Builds timeline">
+          <h2 class="game-detail__section-title">BUILDS TIMELINE</h2>
+
+          @if (store.canEdit()) {
+            <form class="build-form" (ngSubmit)="recordBuild()">
+              <input
+                type="number"
+                class="rd-input build-form__ver"
+                name="version"
+                [ngModel]="buildVersion()"
+                (ngModelChange)="buildVersion.set($event)"
+                min="1"
+              />
+              <select
+                class="rd-select build-form__kind"
+                name="kind"
+                [ngModel]="buildKind()"
+                (ngModelChange)="buildKind.set($event)"
+              >
+                <option value="SAVED">SAVED</option>
+                <option value="PUBLISHED">PUBLISHED</option>
+              </select>
+              <input
+                type="text"
+                class="rd-input build-form__notes"
+                name="notes"
+                placeholder="Build release notes..."
+                [ngModel]="buildNotes()"
+                (ngModelChange)="buildNotes.set($event)"
+              />
+              <button
+                type="submit"
+                class="rd-btn rd-btn--secondary rd-btn--sm"
+                [disabled]="recordingBuild()"
+              >
+                <span>Record build</span>
+              </button>
+            </form>
+          }
+
+          <div class="builds-list">
+            @for (b of g.recentBuilds; track b.id) {
+              <div class="build-row">
+                <div class="build-row__top">
+                  <span class="build-row__ver">v{{ b.version }}</span>
+                  <span
+                    class="build-row__kind"
+                    [class.is-pub]="b.kind === 'PUBLISHED'"
+                  >
+                    {{ b.kind }}
+                  </span>
+                  <span class="build-row__by">
+                    by {{ b.createdByAgentKey ? agentName(b.createdByAgentKey) : (b.createdByUserName ?? 'Operator') }}
+                  </span>
+                  <span class="build-row__time">{{ b.createdAt | relativeTime }}</span>
+                </div>
+                @if (b.notes) {
+                  <div class="build-row__notes">{{ b.notes }}</div>
+                }
+                <div class="build-row__passes">
+                  <span class="build-row__pass-label">108 Tester:</span>
+                  <rd-status-pill
+                    [status]="b.mobilePassA === 'PASSED' ? 'APPROVED' : b.mobilePassA === 'FAILED' ? 'FAILED' : 'QUEUED'"
+                    [label]="'Pass A (844×390): ' + b.mobilePassA"
+                  />
+                  <rd-status-pill
+                    [status]="b.mobilePassB === 'PASSED' ? 'APPROVED' : b.mobilePassB === 'FAILED' ? 'FAILED' : 'QUEUED'"
+                    [label]="'Pass B (800×360): ' + b.mobilePassB"
+                  />
+                </div>
+              </div>
+            }
+          </div>
+        </section>
+      </div>
+    }
+  }
+</div>

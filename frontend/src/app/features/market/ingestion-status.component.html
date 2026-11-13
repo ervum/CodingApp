@@ -1,0 +1,41 @@
+<div class="ingest" [class.ingest--warn]="showWarningBanner()">
+  <div class="ingest__status">
+    @if (isLiveHealthy()) {
+      <span class="ingest__dot ingest__dot--live" aria-hidden="true"></span>
+      <span class="ingest__text">
+        Live · updated {{ board().capturedAt | relativeTime }}
+      </span>
+    } @else if (isSeed()) {
+      <span class="ingest__dot ingest__dot--seed" aria-hidden="true"></span>
+      <span class="ingest__text">Seed data · waiting for first live ingest</span>
+    } @else {
+      <rd-icon name="alert-triangle" [size]="15" />
+      <span class="ingest__text ingest__text--warn">
+        Live data stale
+        @if (board().capturedAt) {
+          since {{ board().capturedAt | relativeTime }}
+        }
+        — {{ board().lastError || 'Roblox explore-api changed or is unreachable' }}
+      </span>
+    }
+  </div>
+
+  <div class="ingest__right">
+    @if (latestRun(); as run) {
+      <span class="ingest__meta">
+        {{ run.gamesFetched }} games · {{ run.requestCount }} req
+      </span>
+    }
+    @if (canRefresh()) {
+      <button
+        type="button"
+        class="rd-btn rd-btn--ghost rd-btn--sm"
+        [disabled]="refreshing()"
+        (click)="refresh.emit()"
+      >
+        <rd-icon name="refresh" [size]="14" />
+        <span>{{ refreshing() ? 'Refreshing…' : 'Refresh' }}</span>
+      </button>
+    }
+  </div>
+</div>

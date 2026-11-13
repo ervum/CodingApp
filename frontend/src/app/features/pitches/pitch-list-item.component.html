@@ -1,0 +1,20 @@
+<button
+  type="button"
+  class="item"
+  [class.is-selected]="selected()"
+  (click)="select.emit(pitch().id)"
+>
+  <div class="item__top">
+    <span class="item__title">{{ pitch().title }}</span>
+    <rd-status-pill [status]="pitch().status" />
+  </div>
+
+  <p class="item__logline">{{ pitch().logline }}</p>
+
+  <div class="item__meta">
+    <span class="item__genre">{{ pitch().genre }}</span>
+    @for (m of topMetrics(); track m.label) {
+      <span class="item__metric">{{ m.label }}: <strong>{{ m.value }}</strong></span>
+    }
+  </div>
+</button>

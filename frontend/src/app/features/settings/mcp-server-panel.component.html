@@ -1,0 +1,272 @@
+<section class="mcp-panel">
+  <header class="mcp-panel__header">
+    <div>
+      <div class="mcp-panel__title-row">
+        <h2 class="mcp-panel__title">MCP Server &amp; AI Tool Bridge</h2>
+        <span class="mcp-panel__badge mcp-panel__badge--live">
+          <span class="mcp-panel__dot"></span>
+          MCP Ready · {{ info()?.toolCount ?? 33 }} Tools
+        </span>
+        @if (mcpBridge.bridgeReady()) {
+          <span class="mcp-panel__badge">window.robdevMcp Active</span>
+        }
+      </div>
+      <p class="rd-text-muted">
+        Exposes every RobDev Control Room capability over Model Context Protocol (Streamable HTTP,
+        SSE, Stdio, and in-page WebMCP) so Antigravity or any external AI agent can prompt Lead,
+        orchestrate specialist agents, inspect runs, and control studio workflows.
+      </p>
+    </div>
+    <button
+      type="button"
+      class="rd-btn rd-btn--ghost rd-btn--sm"
+      [disabled]="loading()"
+      (click)="loadServerInfo()"
+    >
+      <rd-icon name="refresh" [size]="14" />
+      Refresh
+    </button>
+  </header>
+
+  @if (info(); as server) {
+    <div class="mcp-panel__endpoints">
+      <div class="mcp-panel__endpoint-card">
+        <span class="mcp-panel__endpoint-label">Streamable HTTP JSON-RPC Endpoint</span>
+        <div class="mcp-panel__endpoint-row">
+          <code>{{ server.httpEndpoint }}</code>
+          <button
+            type="button"
+            class="rd-btn rd-btn--ghost rd-btn--sm"
+            (click)="copyText(server.httpEndpoint, 'HTTP MCP endpoint')"
+          >
+            Copy URL
+          </button>
+        </div>
+      </div>
+
+      <div class="mcp-panel__endpoint-card">
+        <span class="mcp-panel__endpoint-label">SSE Stream Endpoint</span>
+        <div class="mcp-panel__endpoint-row">
+          <code>{{ server.sseEndpoint }}</code>
+          <button
+            type="button"
+            class="rd-btn rd-btn--ghost rd-btn--sm"
+            (click)="copyText(server.sseEndpoint, 'SSE MCP endpoint')"
+          >
+            Copy URL
+          </button>
+        </div>
+      </div>
+
+      <div class="mcp-panel__endpoint-card">
+        <span class="mcp-panel__endpoint-label">Default Target Studio</span>
+        <div class="mcp-panel__endpoint-row">
+          <code>{{ server.defaultStudioName ?? 'Auto' }} ({{ server.defaultStudioSlug ?? 'auto' }})</code>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Quick Prompt Lead via MCP -->
+  <div class="mcp-panel__quick-lead">
+    <div class="mcp-panel__quick-lead-head">
+      <span class="mcp-panel__sublabel">
+        <rd-icon name="lead" [size]="14" />
+        Quick Test · Prompt Lead via MCP (<code>prompt_lead</code>)
+      </span>
+      <label class="mcp-panel__checkbox">
+        <input
+          type="checkbox"
+          [ngModel]="quickWaitForCompletion()"
+          (ngModelChange)="quickWaitForCompletion.set($event)"
+        />
+        <span>Wait for Lead run completion</span>
+      </label>
+    </div>
+    <div class="mcp-panel__quick-lead-row">
+      <input
+        type="text"
+        class="rd-input mcp-panel__quick-input"
+        placeholder="Send an instruction to Lead via the MCP server..."
+        [ngModel]="quickLeadPrompt()"
+        (ngModelChange)="quickLeadPrompt.set($event)"
+        (keydown.enter)="onQuickPromptLead()"
+      />
+      <button
+        type="button"
+        class="rd-btn rd-btn--primary"
+        [disabled]="runningQuickLead() || !quickLeadPrompt().trim()"
+        (click)="onQuickPromptLead()"
+      >
+        <rd-icon name="send" [size]="14" />
+        {{ runningQuickLead() ? 'Prompting Lead...' : 'Send via MCP' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Client Configuration Snippets -->
+  <div class="mcp-panel__configs">
+    <div class="mcp-panel__config-tabs">
+      <button
+        type="button"
+        class="mcp-panel__tab"
+        [class.mcp-panel__tab--active]="configTab() === 'http'"
+        (click)="configTab.set('http')"
+      >
+        Antigravity / HTTP MCP Config
+      </button>
+      <button
+        type="button"
+        class="mcp-panel__tab"
+        [class.mcp-panel__tab--active]="configTab() === 'stdio'"
+        (click)="configTab.set('stdio')"
+      >
+        Stdio MCP Config
+      </button>
+      <button
+        type="button"
+        class="mcp-panel__tab"
+        [class.mcp-panel__tab--active]="configTab() === 'webmcp'"
+        (click)="configTab.set('webmcp')"
+      >
+        In-Page WebMCP Bridge
+      </button>
+    </div>
+
+    <div class="mcp-panel__code-wrap">
+      @if (configTab() === 'http') {
+        <pre class="mcp-panel__code"><code>{{ httpConfigSnippet() }}</code></pre>
+        <button
+          type="button"
+          class="rd-btn rd-btn--ghost rd-btn--sm mcp-panel__copy-btn"
+          (click)="copyText(httpConfigSnippet(), 'HTTP MCP config JSON')"
+        >
+          Copy JSON
+        </button>
+      } @else if (configTab() === 'stdio') {
+        <pre class="mcp-panel__code"><code>{{ stdioConfigSnippet() }}</code></pre>
+        <button
+          type="button"
+          class="rd-btn rd-btn--ghost rd-btn--sm mcp-panel__copy-btn"
+          (click)="copyText(stdioConfigSnippet(), 'Stdio MCP config JSON')"
+        >
+          Copy JSON
+        </button>
+      } @else {
+        <pre class="mcp-panel__code"><code>{{ webMcpSnippet() }}</code></pre>
+        <button
+          type="button"
+          class="rd-btn rd-btn--ghost rd-btn--sm mcp-panel__copy-btn"
+          (click)="copyText(webMcpSnippet(), 'WebMCP bridge snippet')"
+        >
+          Copy Snippet
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Interactive Tool Explorer & Playground -->
+  <div class="mcp-panel__explorer">
+    <div class="mcp-panel__catalog">
+      <div class="mcp-panel__catalog-controls">
+        <input
+          type="search"
+          class="rd-input"
+          placeholder="Search MCP tools (e.g. prompt_lead, answer_now, vault)..."
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event)"
+        />
+        <div class="mcp-panel__categories">
+          @for (cat of categories(); track cat) {
+            <button
+              type="button"
+              class="mcp-panel__cat-pill"
+              [class.mcp-panel__cat-pill--active]="selectedCategory() === cat"
+              (click)="selectedCategory.set(cat)"
+            >
+              {{ cat }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <div class="mcp-panel__tool-list">
+        @for (tool of filteredTools(); track tool.name) {
+          <button
+            type="button"
+            class="mcp-panel__tool-item"
+            [class.mcp-panel__tool-item--selected]="selectedToolName() === tool.name"
+            (click)="selectTool(tool)"
+          >
+            <div class="mcp-panel__tool-top">
+              <code class="mcp-panel__tool-name">{{ tool.name }}</code>
+              <span class="mcp-panel__tool-cat">{{ tool.category }}</span>
+            </div>
+            <div class="mcp-panel__tool-title">{{ tool.title }}</div>
+            <p class="mcp-panel__tool-desc">{{ tool.description }}</p>
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Tool Runner Playground -->
+    <div class="mcp-panel__playground">
+      @if (selectedTool(); as tool) {
+        <div class="mcp-panel__playground-head">
+          <div>
+            <div class="mcp-panel__tool-top">
+              <code class="mcp-panel__tool-name">{{ tool.name }}</code>
+              <span class="mcp-panel__tool-cat">{{ tool.category }}</span>
+            </div>
+            <h3 class="mcp-panel__playground-title">{{ tool.title }}</h3>
+          </div>
+          <button
+            type="button"
+            class="rd-btn rd-btn--primary rd-btn--sm"
+            [disabled]="runningTool()"
+            (click)="executeSelectedTool()"
+          >
+            <rd-icon name="play" [size]="14" />
+            {{ runningTool() ? 'Running...' : 'Run Tool' }}
+          </button>
+        </div>
+
+        <p class="mcp-panel__playground-desc">{{ tool.description }}</p>
+
+        <label class="mcp-panel__field-label">
+          <span>Arguments (JSON)</span>
+          <button
+            type="button"
+            class="rd-btn rd-btn--ghost rd-btn--sm"
+            (click)="selectTool(tool)"
+          >
+            Reset Example
+          </button>
+        </label>
+        <textarea
+          class="rd-input mcp-panel__textarea"
+          rows="7"
+          [ngModel]="toolArgsJson()"
+          (ngModelChange)="toolArgsJson.set($event)"
+        ></textarea>
+
+        @if (lastToolResult(); as result) {
+          <div class="mcp-panel__result">
+            <div class="mcp-panel__result-head">
+              <span>
+                Result · <code>{{ result.toolName }}</code> ({{ result.durationMs }}ms)
+              </span>
+              <span
+                class="mcp-panel__status-tag"
+                [class.mcp-panel__status-tag--error]="result.isError"
+              >
+                {{ result.isError ? 'ERROR' : 'OK' }}
+              </span>
+            </div>
+            <pre class="mcp-panel__result-pre"><code>{{ formattedLastResult() }}</code></pre>
+          </div>
+        }
+      }
+    </div>
+  </div>
+</section>

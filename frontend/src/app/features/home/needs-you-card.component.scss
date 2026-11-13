@@ -1,0 +1,123 @@
+@use 'rd';
+
+:host {
+  display: block;
+}
+
+.needs-card {
+  --agent-accent: #a855f7;
+  background: #12141e;
+  border: 1px solid #1f2232;
+  border-left: 3px solid var(--agent-accent);
+  border-radius: 10px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.needs-card__top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.needs-card__header {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--agent-accent);
+}
+
+.needs-card__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.35;
+}
+
+.needs-card__body {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #9ca3af;
+  @include rd.truncate(2);
+}
+
+.needs-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.needs-card__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 120ms ease, background 120ms ease, color 120ms ease;
+}
+
+.needs-card__btn--good {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+
+  &:hover:not(:disabled) {
+    background: rgba(34, 197, 94, 0.24);
+  }
+}
+
+.needs-card__btn--dark {
+  background: #181b28;
+  color: #e5e7eb;
+  border: 1px solid #282c3e;
+
+  &:hover {
+    background: #202435;
+  }
+}
+
+.needs-card__btn--inline {
+  background: transparent;
+  border: 0;
+  color: #9ca3af;
+  padding: 0 8px;
+
+  &:hover {
+    color: #e5e7eb;
+  }
+}
+
+.needs-card__reply-box {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.needs-card__textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #0d0f17;
+  border: 1px solid #232738;
+  color: #f3f4f6;
+  font-size: 12px;
+  outline: none;
+}
+
+.needs-card__reply-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}

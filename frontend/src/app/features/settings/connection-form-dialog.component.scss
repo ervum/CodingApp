@@ -1,0 +1,74 @@
+@use 'rd';
+
+.conn-form {
+  display: flex;
+  flex-direction: column;
+  gap: rd.space(3);
+}
+
+.conn-form__helper {
+  padding: rd.space(3);
+  border-radius: rd.radius('md');
+  background: rd.color('bg-2');
+  border: 1px solid rd.color('border');
+  display: grid;
+  gap: rd.space(2.5);
+}
+
+.conn-form__helper-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: rd.space(2);
+}
+
+.conn-form__helper-title {
+  display: inline-flex;
+  align-items: center;
+  gap: rd.space(1.5);
+  font-size: rd.fs('sm');
+  font-weight: rd.fw('semibold');
+  color: rd.color('text-1');
+}
+
+.conn-form__helper-desc {
+  margin: 0;
+  font-size: rd.fs('xs');
+  line-height: rd.lh('normal');
+  color: rd.color('text-2');
+}
+
+.conn-form__presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: rd.space(1.5);
+}
+
+.conn-form__detected {
+  display: flex;
+  flex-wrap: wrap;
+  gap: rd.space(1.5);
+}
+
+.conn-form__detected-chip {
+  padding: rd.space(1) rd.space(2.5);
+  border-radius: rd.radius('pill');
+  background: rd.color('success-soft');
+  border: 1px solid rd.color('success');
+  color: rd.color('success');
+  font-size: rd.fs('xs');
+  @include rd.interactive;
+}
+
+.conn-form__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: rd.space(2.5);
+}
+
+.conn-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: rd.space(2);
+  padding-top: rd.space(2);
+}

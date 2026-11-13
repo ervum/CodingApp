@@ -1,0 +1,43 @@
+@use 'rd';
+
+:host {
+  display: inline-block;
+}
+
+.pills {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: rd.space(1.5);
+}
+
+.pills__item {
+  display: inline-flex;
+  align-items: center;
+  gap: rd.space(1.5);
+  height: 28px;
+  padding: 0 rd.space(2.5);
+  border-radius: rd.radius('pill');
+  background: rd.color('bg-2');
+  border: 1px solid rd.color('border');
+  font-size: rd.fs('sm');
+  font-weight: rd.fw('medium');
+  color: rd.color('text-2');
+  cursor: pointer;
+  transition:
+    background-color rd.dur('fast') rd.ease('standard'),
+    border-color rd.dur('fast') rd.ease('standard'),
+    color rd.dur('fast') rd.ease('standard');
+  @include rd.focus-ring;
+
+  &:hover {
+    background: rd.color('bg-3');
+    color: rd.color('text-1');
+  }
+
+  &.is-active {
+    background: rd.color('primary-soft');
+    border-color: rd.color('primary');
+    color: rd.color('text-1');
+  }
+}

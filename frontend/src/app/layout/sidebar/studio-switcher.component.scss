@@ -1,0 +1,117 @@
+@use 'rd';
+
+:host {
+  display: block;
+  position: relative;
+}
+
+.switcher {
+  padding: 14px 12px 10px;
+}
+
+.switcher__trigger {
+  width: 100%;
+  padding: 4px 6px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #F3F4F6;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 120ms ease;
+
+  &:hover {
+    background: #141621;
+  }
+}
+
+.switcher__mark {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #8B5CF6, #6D28D9);
+  color: #FFFFFF;
+  display: grid;
+  place-items: center;
+  flex: none;
+  box-shadow: 0 2px 10px rgba(139, 92, 246, 0.35);
+}
+
+.switcher__titles {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.switcher__title {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.15;
+  color: #F3F4F6;
+  @include rd.truncate(1);
+}
+
+.switcher__subtitle {
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.15;
+  color: #6B7280;
+  @include rd.truncate(1);
+}
+
+.switcher__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: rd.z('dropdown') - 1;
+}
+
+.switcher__menu {
+  position: absolute;
+  top: calc(100% - 4px);
+  left: rd.space(3);
+  right: rd.space(3);
+  z-index: rd.z('dropdown');
+  @include rd.glass-panel(0.95, 18px, true);
+  border-radius: rd.radius('lg');
+  padding: rd.space(1.5);
+  display: grid;
+  gap: rd.space(0.5);
+}
+
+.switcher__section {
+  @include rd.section-label;
+  padding: rd.space(1.5) rd.space(2);
+}
+
+.switcher__item {
+  width: 100%;
+  height: 32px;
+  padding: 0 rd.space(2.5);
+  border-radius: rd.radius('sm');
+  display: flex;
+  align-items: center;
+  gap: rd.space(2);
+  font-size: rd.fs('sm');
+  color: rd.color('text-2');
+  text-align: left;
+  @include rd.interactive('bg-3', 'bg-4');
+
+  &.is-active {
+    color: rd.color('text-1');
+    background: rd.color('primary-soft');
+  }
+}
+
+.switcher__item-name {
+  flex: 1 1 auto;
+  @include rd.truncate(1);
+}
+
+.switcher__item-role {
+  font: #{rd.fw('medium')} #{rd.fs('2xs')}/1 var(--rd-font-mono);
+  color: rd.color('text-3');
+}

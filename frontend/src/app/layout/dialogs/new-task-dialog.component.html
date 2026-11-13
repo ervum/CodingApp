@@ -1,0 +1,78 @@
+<rd-dialog
+  [(open)]="open"
+  title="New task"
+  subtitle="Pick who's doing it, which game, and tell it what to make."
+  width="620px"
+>
+  <form class="new-task" (ngSubmit)="submit()" (keydown)="onKeydown($event)">
+    <div class="new-task__pills" role="radiogroup" aria-label="Pick agent">
+      @for (a of roster; track a.key) {
+        <button
+          type="button"
+          class="new-task__pill"
+          [class.is-active]="agentKey() === a.key"
+          (click)="agentKey.set(a.key)"
+        >
+          <rd-agent-avatar [agentKey]="a.key" size="sm" />
+          <span>{{ a.name }}</span>
+        </button>
+      }
+    </div>
+
+    <div class="new-task__helper">
+      <strong>{{ selectedAgentMeta().name }}</strong> — {{ selectedAgentMeta().title }}
+    </div>
+
+    <div class="new-task__row">
+      <input
+        type="text"
+        class="new-task__input new-task__input--title"
+        name="title"
+        placeholder="Short title (optional)"
+        [ngModel]="title()"
+        (ngModelChange)="title.set($event)"
+      />
+
+      <select
+        class="new-task__select"
+        name="gameId"
+        aria-label="Select game"
+        [ngModel]="gameId()"
+        (ngModelChange)="gameId.set($event)"
+      >
+        @for (game of store.games(); track game.id) {
+          <option [value]="game.id">{{ game.name }}</option>
+        }
+        <option value="">All games</option>
+      </select>
+    </div>
+
+    <textarea
+      class="new-task__textarea"
+      name="brief"
+      rows="4"
+      placeholder="What do you want done? Paste screenshots if they help."
+      [ngModel]="brief()"
+      (ngModelChange)="brief.set($event)"
+      required
+    ></textarea>
+
+    <div class="new-task__footer">
+      <button type="button" class="new-task__attach">
+        <rd-icon name="paperclip" [size]="13" />
+        <span>Attach image</span>
+      </button>
+
+      <span class="new-task__hint">Ctrl+Enter to send · Ctrl+V to paste screenshot</span>
+
+      <button
+        type="submit"
+        class="new-task__submit"
+        [disabled]="submitting() || brief().trim().length < 3"
+      >
+        <rd-icon name="sparkles" [size]="13" />
+        <span>Queue task</span>
+      </button>
+    </div>
+  </form>
+</rd-dialog>

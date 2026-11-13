@@ -1,0 +1,160 @@
+@use 'rd';
+
+:host {
+  display: block;
+}
+
+.live-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.telemetry-card {
+  background: #12141e;
+  border: 1px solid #1f2232;
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.telemetry-card__header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.telemetry-card__dot--live {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #6b7280;
+}
+
+.telemetry-card__title {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+.telemetry-card__title--normal {
+  font-size: 13px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #f3f4f6;
+}
+
+.telemetry-card__empty {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.live-panel__games {
+  display: flex;
+  flex-direction: column;
+}
+
+.studio-box__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.studio-box__label {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.studio-box__btns {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.studio-box__btn {
+  height: 22px;
+  min-width: 24px;
+  padding: 0 7px;
+  border-radius: 5px;
+  background: #181b28;
+  border: 1px solid #25293a;
+  color: #9ca3af;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+
+  &.is-active {
+    background: #272b3f;
+    border-color: #3d4361;
+    color: #ffffff;
+  }
+}
+
+.studio-box__lane {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-radius: 7px;
+  background: #0e1018;
+  border: 1px solid #1c1f2e;
+  font-size: 12px;
+}
+
+.studio-box__lane-name {
+  color: #d1d5db;
+  font-family: var(--rd-font-mono);
+  font-size: 11px;
+}
+
+.studio-box__lane-status {
+  color: #6b7280;
+  font-size: 11px;
+}
+
+.freshness-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.freshness-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.freshness-row__left {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #9ca3af;
+}
+
+.freshness-row__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #22c55e;
+}
+
+.freshness-row__val {
+  color: #e5e7eb;
+  font-family: var(--rd-font-mono);
+  font-size: 11px;
+}
+
+.live-run {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: inherit;
+}

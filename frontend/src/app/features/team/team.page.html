@@ -1,0 +1,77 @@
+@if (fixedAgent() !== 'lead') {
+  <aside class="team__list" aria-label="Studio agents">
+    <div class="team__mode-bar">
+      <button
+        type="button"
+        class="team__mode-btn"
+        [class.is-active]="viewMode() === 'console'"
+        (click)="viewMode.set('console')"
+      >
+        Console
+      </button>
+      <button
+        type="button"
+        class="team__mode-btn"
+        [class.is-active]="viewMode() === 'wall'"
+        (click)="viewMode.set('wall')"
+      >
+        Wall of Screens
+      </button>
+    </div>
+    <rd-agent-list [selected]="activeAgentKey()" (select)="onSelectAgent($event)" />
+  </aside>
+}
+
+<section class="team__console" aria-label="Agent execution console">
+  @if (viewMode() === 'wall' && fixedAgent() !== 'lead') {
+    <div class="team-wall">
+      <header class="team-wall__header">
+        <div>
+          <h2 class="team-wall__title">LIVE AGENT VIEWPORTS (WALL OF SCREENS)</h2>
+          <p class="team-wall__sub">
+            Real-time browser, sandbox, and PC viewports across all specialist agents. Click any screen to jump into that agent's console.
+          </p>
+        </div>
+      </header>
+      <div class="team-wall__grid">
+        @for (ag of wallAgents(); track ag.key) {
+          <article class="team-wall__card" (click)="onSelectAgent(ag.key)">
+            <header class="team-wall__card-head">
+              <div class="team-wall__agent">
+                <rd-agent-avatar [agent]="ag" size="xs" />
+                <strong>{{ ag.name }}</strong>
+              </div>
+              <span class="team-wall__status" [attr.data-status]="ag.status">
+                {{ ag.status }}
+              </span>
+            </header>
+            <div class="team-wall__viewport">
+              @if (screenFor(ag.key); as scr) {
+                @if (scr.mediaUrl) {
+                  <img
+                    class="team-wall__img"
+                    [src]="scr.mediaUrl"
+                    [alt]="ag.name + ' live viewport'"
+                  />
+                }
+                <div class="team-wall__caption">
+                  <span class="team-wall__source">{{ scr.source }}</span>
+                  <span>{{ scr.windowTitle || scr.taskTitle || ag.title }}</span>
+                </div>
+              } @else {
+                <div class="team-wall__placeholder">
+                  <span class="team-wall__glyph">{{ ag.glyph }}</span>
+                  <span class="team-wall__snippet">
+                    {{ ag.currentTaskTitle || ag.lastSnippet || ag.title }}
+                  </span>
+                </div>
+              }
+            </div>
+          </article>
+        }
+      </div>
+    </div>
+  } @else {
+    <rd-agent-console [agentKey]="activeAgentKey()" [wide]="fixedAgent() === 'lead'" />
+  }
+</section>

@@ -1,0 +1,59 @@
+<div class="telemetry">
+  <div class="telemetry__left">
+    <span class="telemetry__stat">{{ words() | number }} words</span>
+    <span class="telemetry__sep">·</span>
+    <span class="telemetry__stat">{{ chars() | number }} chars</span>
+
+    @if (doc(); as d) {
+      <span class="telemetry__sep">·</span>
+      <div class="telemetry__backlinks-wrap">
+        <button
+          type="button"
+          class="telemetry__backlinks-btn"
+          (click)="backlinksOpen.set(!backlinksOpen())"
+        >
+          <rd-icon name="link" [size]="12" />
+          <span>{{ d.backlinks.length }} backlinks</span>
+        </button>
+
+        @if (backlinksOpen() && d.backlinks.length > 0) {
+          <div class="telemetry__popover" role="menu">
+            <div class="telemetry__popover-title">REFERENCED BY</div>
+            @for (bl of d.backlinks; track bl.documentId) {
+              <button
+                type="button"
+                class="telemetry__popover-item"
+                role="menuitem"
+                (click)="selectBacklink(bl.documentId)"
+              >
+                <rd-icon name="file-text" [size]="12" />
+                <span>{{ bl.path }}</span>
+              </button>
+            }
+          </div>
+        }
+      </div>
+
+      @if (linkedAgentChips().length > 0) {
+        <span class="telemetry__sep">·</span>
+        <div class="telemetry__agents">
+          <span>linked:</span>
+          @for (chip of linkedAgentChips(); track chip.agentKey) {
+            <span class="telemetry__agent-chip" [title]="chip.tooltip">
+              <rd-agent-avatar [agent]="chip.agent" size="xs" [showStatus]="false" />
+              <span>{{ chip.agentKey }}</span>
+            </span>
+          }
+        </div>
+      }
+    }
+  </div>
+
+  @if (doc(); as d) {
+    <div class="telemetry__right">
+      <span>
+        v{{ d.version }} · updated {{ d.updatedAt | relativeTime }} by {{ d.updatedBy.label }}
+      </span>
+    </div>
+  }
+</div>

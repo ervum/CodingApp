@@ -1,0 +1,311 @@
+<div class="market">
+  <header class="market__header">
+    <h1 class="market__title">Market Intel</h1>
+    <div class="market__meta">
+      charts db · 3 snapshots · velocity tier · breakout fit · benchmarks tier · read-only
+    </div>
+  </header>
+
+  <nav class="market__tabs" aria-label="Market sub-tabs">
+    <button
+      type="button"
+      class="market__tab"
+      [class.is-active]="activeTab() === 'CHARTS'"
+      (click)="activeTab.set('CHARTS')"
+    >
+      1 · charts
+    </button>
+    <button
+      type="button"
+      class="market__tab"
+      [class.is-active]="activeTab() === 'CORPUS'"
+      (click)="activeTab.set('CORPUS')"
+    >
+      2 · corpus
+    </button>
+    <button
+      type="button"
+      class="market__tab"
+      [class.is-active]="activeTab() === 'BENCHMARKS'"
+      (click)="activeTab.set('BENCHMARKS')"
+    >
+      3 · benchmarks
+    </button>
+    <button
+      type="button"
+      class="market__tab"
+      [class.is-active]="activeTab() === 'BREAKOUTS'"
+      (click)="activeTab.set('BREAKOUTS')"
+    >
+      4 · breakouts
+    </button>
+  </nav>
+
+  @switch (activeTab()) {
+    @case ('CHARTS') {
+      <!-- 5-Card Velocity Sparkline Strip -->
+      <div class="velocity-strip">
+        @for (card of velocityCards; track card.name) {
+          <article class="velocity-card">
+            <div class="velocity-card__top">
+              <span class="velocity-card__name">{{ card.name }}</span>
+              <span class="velocity-card__delta">{{ card.velocityPct }}</span>
+            </div>
+            <svg class="velocity-card__spark" viewBox="0 0 150 38" preserveAspectRatio="none">
+              <polyline
+                fill="none"
+                stroke="#4ade80"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                [attr.points]="card.points"
+              />
+            </svg>
+            <div class="velocity-card__foot">
+              <span>{{ card.sort }}</span>
+              <span>snap {{ card.snap }}</span>
+            </div>
+          </article>
+        }
+      </div>
+
+      <div class="market__filter-pills">
+        <button
+          type="button"
+          class="market__filter-pill"
+          [class.is-active]="chartFilter() === 'top-trending'"
+          (click)="toggleChartFilter('top-trending')"
+        >
+          top-trending
+        </button>
+        <button
+          type="button"
+          class="market__filter-pill"
+          [class.is-active]="chartFilter() === 'up-and-coming'"
+          (click)="toggleChartFilter('up-and-coming')"
+        >
+          up-and-coming
+        </button>
+        <input
+          type="search"
+          class="rd-input market__search-input"
+          placeholder="Search Roblox charts by game or genre..."
+          [ngModel]="marketStore.search()"
+          (ngModelChange)="marketStore.setSearch($event)"
+        />
+        <select
+          class="rd-select market__genre-select"
+          aria-label="Filter by genre"
+          [ngModel]="marketStore.genre()"
+          (ngModelChange)="marketStore.setGenre($event)"
+        >
+          <option value="">All Genres</option>
+          <option value="Action">Action</option>
+          <option value="Tycoon">Tycoon</option>
+          <option value="Sports">Sports</option>
+          <option value="Simulation">Simulation</option>
+          <option value="RPG">RPG</option>
+        </select>
+        <button
+          type="button"
+          class="rd-btn rd-btn--secondary rd-btn--sm"
+          [disabled]="marketStore.refreshing()"
+          (click)="marketStore.refresh()"
+        >
+          {{ marketStore.refreshing() ? 'Refreshing…' : 'Refresh Live Charts' }}
+        </button>
+      </div>
+
+      <div class="mono-table-wrap">
+        <table class="mono-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>GAME</th>
+              <th>SORT</th>
+              <th>VELOCITY</th>
+              <th>SNAP</th>
+              <th>ACTION</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of filteredChartRows(); track row.rank) {
+              <tr class="mono-table__clickable" (click)="openRowDrawer(row)">
+                <td class="mono-table__muted">{{ row.rank }}</td>
+                <td class="mono-table__strong">{{ row.name }}</td>
+                <td><span class="mono-chip">{{ row.sort }}</span></td>
+                <td class="mono-table__pos">{{ row.velocity }}</td>
+                <td class="mono-table__muted">{{ row.snap }}</td>
+                <td>
+                  <button
+                    type="button"
+                    class="rd-btn rd-btn--ghost rd-btn--sm"
+                    (click)="openRowDrawer(row); $event.stopPropagation()"
+                  >
+                    Inspect &amp; Pitch →
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    @case ('CORPUS') {
+      <div class="mono-table-wrap">
+        <table class="mono-table">
+          <thead>
+            <tr>
+              <th>NAME</th>
+              <th>GENRE</th>
+              <th>MECHANIC</th>
+              <th>LOOP</th>
+              <th>NOTES</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of corpusRows; track row.name) {
+              <tr>
+                <td class="mono-table__strong">{{ row.name }}</td>
+                <td>{{ row.genre }}</td>
+                <td>{{ row.mechanic }}</td>
+                <td>{{ row.loop }}</td>
+                <td class="mono-table__muted">{{ row.notes }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    @case ('BENCHMARKS') {
+      <div class="mono-table-wrap">
+        <table class="mono-table">
+          <thead>
+            <tr>
+              <th>METRIC</th>
+              <th>TARGET</th>
+              <th>FLOOR</th>
+              <th>SOURCE</th>
+              <th>NOTES</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of benchmarkRows; track row.metric) {
+              <tr>
+                <td class="mono-table__strong">
+                  <span>{{ row.metric }}</span>
+                  <span
+                    class="tier-pill"
+                    [class.tier-pill--must]="row.tier === 'must-hit'"
+                    [class.tier-pill--strong]="row.tier === 'strong'"
+                  >
+                    {{ row.tier }}
+                  </span>
+                </td>
+                <td class="mono-table__pos">{{ row.target }}</td>
+                <td class="mono-table__muted">{{ row.floor }}</td>
+                <td>{{ row.source }}</td>
+                <td class="mono-table__muted">{{ row.notes }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    @case ('BREAKOUTS') {
+      <section class="breakouts-section">
+        <h2 class="breakouts-section__title">Breakouts (&lt; 90d)</h2>
+        <div class="mono-table-wrap">
+          <table class="mono-table">
+            <thead>
+              <tr>
+                <th>GAME</th>
+                <th>AGE</th>
+                <th>PEAK PLAYERS</th>
+                <th>MONETISATION</th>
+                <th>RETENTION HOOK</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of breakoutRows; track row.game) {
+                <tr>
+                  <td class="mono-table__strong">{{ row.game }}</td>
+                  <td class="mono-table__pos">{{ row.age }}</td>
+                  <td>{{ row.peakPlayers }}</td>
+                  <td>{{ row.monetisation }}</td>
+                  <td class="mono-table__muted">{{ row.retentionHook }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+    }
+  }
+
+  <rd-drawer
+    [open]="!!marketStore.selectedGame()"
+    [label]="marketStore.selectedGame()?.name ?? 'Market Telemetry'"
+    (openChange)="onDrawerOpenChange($event)"
+    (closed)="onDrawerOpenChange(false)"
+  >
+    @if (marketStore.selectedGame(); as game) {
+      <div class="market-drawer">
+        <div class="market-drawer__stats">
+          <div class="market-drawer__stat">
+            <span class="market-drawer__stat-label">Active CCU</span>
+            <strong class="market-drawer__stat-val">{{ game.playing | number }}</strong>
+          </div>
+          <div class="market-drawer__stat">
+            <span class="market-drawer__stat-label">Genre</span>
+            <strong class="market-drawer__stat-val">{{ game.genre || 'General' }}</strong>
+          </div>
+          <div class="market-drawer__stat">
+            <span class="market-drawer__stat-label">Like Ratio</span>
+            <strong class="market-drawer__stat-val">
+              {{ game.likeRatio !== null ? ((game.likeRatio * 100) | number: '1.0-1') + '%' : '91%' }}
+            </strong>
+          </div>
+        </div>
+
+        <div class="market-drawer__chart-card">
+          <div class="market-drawer__chart-title">14-Day CCU Velocity Trajectory</div>
+          <svg class="market-drawer__svg" viewBox="0 0 320 100" preserveAspectRatio="none">
+            <polyline
+              fill="none"
+              stroke="#7c3aed"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              [attr.points]="historySvgPoints()"
+            />
+          </svg>
+        </div>
+
+        @if (studioStore.canEdit()) {
+          <div class="market-drawer__actions">
+            <button
+              type="button"
+              class="rd-btn rd-btn--primary"
+              [disabled]="dispatchingAction()"
+              (click)="pitchCompetitor()"
+            >
+              Pitch a Competitor to This Game
+            </button>
+            <button
+              type="button"
+              class="rd-btn rd-btn--secondary"
+              [disabled]="dispatchingAction()"
+              (click)="sendToPulseTeardown()"
+            >
+              Send to Pulse for Teardown
+            </button>
+          </div>
+        }
+      </div>
+    }
+  </rd-drawer>
+</div>

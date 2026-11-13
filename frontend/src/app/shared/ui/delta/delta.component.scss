@@ -1,0 +1,26 @@
+@use 'rd';
+
+:host {
+  display: inline-flex;
+}
+
+.delta {
+  display: inline-flex;
+  align-items: center;
+  gap: rd.space(1);
+  font-family: var(--rd-font-mono);
+  font-size: rd.fs('sm');
+  @include rd.numeric;
+}
+
+.delta--pos {
+  color: rd.color('success');
+}
+
+.delta--neg {
+  color: rd.color('danger');
+}
+
+.delta--flat {
+  color: rd.color('text-3');
+}

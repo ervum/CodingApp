@@ -1,0 +1,19 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: robdev-postgres
+    environment:
+      POSTGRES_USER: robdev
+      POSTGRES_PASSWORD: robdev
+      POSTGRES_DB: robdev
+    ports:
+      - "5433:5432"
+    volumes:
+      - rd_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U robdev -d robdev"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+volumes:
+  rd_pg:

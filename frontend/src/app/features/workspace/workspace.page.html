@@ -1,0 +1,871 @@
+<div class="ws-page">
+  <header class="ws-header">
+    <div class="ws-header__left">
+      <div class="ws-header__title-row">
+        <h1 class="ws-header__title">/WORKSPACE/ EXPLORER</h1>
+        @if (overview(); as ov) {
+          <span
+            class="ws-mode-badge"
+            [class.ws-mode-badge--general]="ov.contextMode === 'GENERAL'"
+          >
+            {{ ov.contextMode === 'GENERAL' ? 'General Mode' : 'Roblox Mode' }}
+          </span>
+          <span class="ws-root-path" [title]="ov.workspaceRoot">
+            {{ ov.workspaceRoot }}
+          </span>
+        }
+      </div>
+      @if (overview(); as ov) {
+        <div class="ws-stats-row">
+          <span class="ws-stat">
+            <strong>{{ ov.totalFiles | number }}</strong> files
+          </span>
+          <span class="ws-stat-sep">·</span>
+          <span class="ws-stat">
+            <strong>{{ ov.totalFolders | number }}</strong> folders
+          </span>
+          <span class="ws-stat-sep">·</span>
+          <span class="ws-stat">
+            <strong>{{ ov.totalBytes | bytes }}</strong> total size
+          </span>
+          <span class="ws-stat-sep">·</span>
+          <span class="ws-stat">
+            <strong>{{ ov.totalVersions | number }}</strong> versions
+          </span>
+          <span class="ws-stat-sep">·</span>
+          <span class="ws-stat">
+            <strong>{{ ov.totalComments | number }}</strong> agent &amp; operator comments
+          </span>
+          @for (lang of ov.languages.slice(0, 5); track lang.language) {
+            <span class="ws-lang-pill">
+              {{ lang.language }} ({{ lang.count }})
+            </span>
+          }
+        </div>
+      }
+    </div>
+
+    <div class="ws-header__actions">
+      <button
+        type="button"
+        class="rd-btn rd-btn--secondary rd-btn--sm"
+        [disabled]="loadingOverview()"
+        (click)="loadOverview(true)"
+      >
+        <rd-icon name="refresh" [size]="14" />
+        <span>Refresh</span>
+      </button>
+      @if (store.canEdit()) {
+        <button
+          type="button"
+          class="rd-btn rd-btn--primary rd-btn--sm"
+          (click)="openNewFileDialog()"
+        >
+          <rd-icon name="plus" [size]="14" />
+          <span>New File</span>
+        </button>
+      }
+    </div>
+  </header>
+
+  <div class="ws-layout">
+    <!-- Left Sidebar: Hierarchical File & Folder Tree -->
+    <aside class="ws-sidebar" aria-label="/workspace/ hierarchy">
+      <div class="ws-sidebar__controls">
+        <div class="ws-search">
+          <rd-icon name="search" [size]="13" />
+          <input
+            type="text"
+            class="ws-search__input"
+            placeholder="Filter files, folders, comments..."
+            [ngModel]="filterQuery()"
+            (ngModelChange)="filterQuery.set($event)"
+          />
+          @if (filterQuery()) {
+            <button
+              type="button"
+              class="ws-search__clear"
+              (click)="filterQuery.set('')"
+              aria-label="Clear filter"
+            >
+              ✕
+            </button>
+          }
+        </div>
+        <div class="ws-tree-actions">
+          <button
+            type="button"
+            class="ws-mini-btn"
+            title="Expand all folders"
+            (click)="expandAllFolders()"
+          >
+            Expand all
+          </button>
+          <button
+            type="button"
+            class="ws-mini-btn"
+            title="Collapse all folders"
+            (click)="collapseAllFolders()"
+          >
+            Collapse
+          </button>
+        </div>
+      </div>
+
+      @if (flatTreeRows().length === 0) {
+        <div class="ws-sidebar__empty">
+          No files found in <code>/workspace/</code>.
+        </div>
+      } @else {
+        <div class="ws-tree" role="tree">
+          @for (row of flatTreeRows(); track row.node.path) {
+            <button
+              type="button"
+              role="treeitem"
+              class="ws-tree-row"
+              [class.ws-tree-row--folder]="row.node.kind === 'folder'"
+              [class.ws-tree-row--selected]="row.node.kind === 'file' && selectedFilePath() === row.node.path"
+              [style.padding-left.px]="10 + row.depth * 14"
+              [title]="row.node.latestAgentComment || row.node.path"
+              (click)="onTreeRowClick(row)"
+            >
+              @if (row.node.kind === 'folder') {
+                <span class="ws-tree-row__chevron">
+                  <rd-icon
+                    [name]="row.expanded ? 'chevron-down' : 'chevron-right'"
+                    [size]="12"
+                  />
+                </span>
+                <rd-icon
+                  class="ws-tree-row__icon ws-tree-row__icon--folder"
+                  [name]="row.expanded ? 'folder-open' : 'folder'"
+                  [size]="14"
+                />
+                <span class="ws-tree-row__name">{{ row.node.name }}</span>
+                @if (row.node.className) {
+                  <span class="ws-tree-row__class">{{ row.node.className }}</span>
+                }
+                <span class="ws-tree-row__meta">
+                  {{ row.node.fileCount ?? 0 }}f
+                </span>
+              } @else {
+                <span class="ws-tree-row__chevron"></span>
+                <rd-icon
+                  class="ws-tree-row__icon ws-tree-row__icon--file"
+                  name="file-text"
+                  [size]="13"
+                />
+                <span class="ws-tree-row__name">{{ row.node.name }}</span>
+                <span class="ws-tree-row__badges">
+                  @if (row.node.versionCount > 1) {
+                    <span class="ws-badge ws-badge--ver">v{{ row.node.versionCount }}</span>
+                  }
+                  @if (row.node.commentCount > 0) {
+                    <span class="ws-badge ws-badge--comment" title="Agent / user comments">
+                      💬{{ row.node.commentCount }}
+                    </span>
+                  }
+                  <span class="ws-tree-row__size">{{ row.node.bytes | bytes }}</span>
+                </span>
+              }
+            </button>
+          }
+        </div>
+      }
+    </aside>
+
+    <!-- Right Inspector: Selected File Details -->
+    <main class="ws-main">
+      @if (!fileDetail(); as _none) {
+        <div class="ws-empty-wrap">
+          <rd-empty-state
+            icon="folder"
+            title="Select a file in /workspace/"
+            description="Browse the folder hierarchy on the left to inspect source code, past versions and line diffs, creation/modification dates, agent comments, and file metadata."
+          />
+        </div>
+      } @else if (fileDetail(); as file) {
+        <header class="ws-file-header">
+          <div class="ws-file-header__top">
+            <div class="ws-file-header__path-wrap">
+              <span class="ws-file-header__prefix">/workspace/</span>
+              <h2 class="ws-file-header__path">{{ file.path }}</h2>
+              <span class="ws-badge ws-badge--lang">{{ file.language }}</span>
+              <span class="ws-badge ws-badge--ver">v{{ file.currentVersion }}</span>
+              @if (file.misc.className) {
+                <span class="ws-badge ws-badge--class" title="Silicon Instance ClassName">
+                  {{ file.misc.className }}
+                </span>
+              }
+            </div>
+
+            <div class="ws-file-header__actions">
+              <button
+                type="button"
+                class="rd-btn rd-btn--ghost rd-btn--sm"
+                (click)="copyCurrentContent()"
+              >
+                <rd-icon name="copy" [size]="13" />
+                <span>{{ copiedState() ? 'Copied!' : 'Copy' }}</span>
+              </button>
+              <button
+                type="button"
+                class="rd-btn rd-btn--ghost rd-btn--sm"
+                (click)="downloadCurrentFile()"
+              >
+                <span>Download</span>
+              </button>
+              @if (store.canEdit() && !editingMode()) {
+                <button
+                  type="button"
+                  class="rd-btn rd-btn--secondary rd-btn--sm"
+                  (click)="startEditing()"
+                >
+                  <rd-icon name="edit" [size]="13" />
+                  <span>Edit File</span>
+                </button>
+              }
+            </div>
+          </div>
+
+          <div class="ws-file-header__dates">
+            <span>
+              <strong>Created:</strong> {{ file.createdAt | date: 'medium' }}
+              ({{ file.createdAt | relativeTime }})
+            </span>
+            <span class="ws-stat-sep">·</span>
+            <span>
+              <strong>Modified:</strong> {{ file.updatedAt | date: 'medium' }}
+              ({{ file.updatedAt | relativeTime }})
+            </span>
+            <span class="ws-stat-sep">·</span>
+            <span>
+              <strong>Size:</strong> {{ file.bytes | bytes }} ({{ file.misc.lineCount | number }} lines · ~{{ file.misc.estimatedTokens | number }} tokens)
+            </span>
+            @if (file.misc.contributingAgents.length > 0) {
+              <span class="ws-stat-sep">·</span>
+              <span class="ws-contrib-inline">
+                <strong>Agents:</strong>
+                @for (ag of file.misc.contributingAgents; track ag.agentKey) {
+                  <span class="ws-agent-chip">
+                    <rd-agent-avatar [agentKey]="ag.agentKey" size="xs" />
+                    {{ ag.agentName }} ({{ ag.versionCount }}v)
+                  </span>
+                }
+              </span>
+            }
+          </div>
+
+          @if (file.comments.length > 0) {
+            <div class="ws-latest-comment" (click)="activeTab.set('comments')">
+              <span class="ws-latest-comment__tag">
+                {{ file.comments[0]!.authorName }} Comment:
+              </span>
+              <span class="ws-latest-comment__body">
+                {{ file.comments[0]!.body }}
+              </span>
+              <span class="ws-latest-comment__more">
+                View all {{ file.comments.length }} comment{{ file.comments.length === 1 ? '' : 's' }} →
+              </span>
+            </div>
+          }
+
+          <nav class="ws-tabs" aria-label="Workspace file views">
+            <button
+              type="button"
+              class="ws-tab"
+              [class.ws-tab--active]="activeTab() === 'code'"
+              (click)="activeTab.set('code')"
+            >
+              <span>Code</span>
+              <span class="ws-tab__count">{{ file.misc.lineCount }} lines</span>
+            </button>
+            <button
+              type="button"
+              class="ws-tab"
+              [class.ws-tab--active]="activeTab() === 'diff'"
+              (click)="activeTab.set('diff')"
+            >
+              <span>Versions &amp; Diff</span>
+              <span class="ws-tab__count">{{ file.versions.length }}</span>
+            </button>
+            <button
+              type="button"
+              class="ws-tab"
+              [class.ws-tab--active]="activeTab() === 'comments'"
+              (click)="activeTab.set('comments')"
+            >
+              <span>Agent Comments</span>
+              <span class="ws-tab__count">{{ file.comments.length }}</span>
+            </button>
+            <button
+              type="button"
+              class="ws-tab"
+              [class.ws-tab--active]="activeTab() === 'info'"
+              (click)="activeTab.set('info')"
+            >
+              <span>File Info &amp; Misc</span>
+            </button>
+            <button
+              type="button"
+              class="ws-tab"
+              [class.ws-tab--active]="activeTab() === 'inspector'"
+              (click)="activeTab.set('inspector')"
+            >
+              <span>DataModel Inspector</span>
+              @if (file.misc.className) {
+                <span class="ws-tab__count">{{ file.misc.className }}</span>
+              }
+            </button>
+          </nav>
+        </header>
+
+        <!-- TAB 1: CODE VIEW / INLINE EDITOR -->
+        @if (activeTab() === 'code') {
+          <section class="ws-tab-panel ws-code-panel">
+            @if (editingMode()) {
+              <div class="ws-editor">
+                <textarea
+                  class="ws-editor__textarea"
+                  rows="22"
+                  [ngModel]="editDraftContent()"
+                  (ngModelChange)="editDraftContent.set($event)"
+                ></textarea>
+                <div class="ws-editor__footer">
+                  <input
+                    type="text"
+                    class="rd-input ws-editor__comment"
+                    placeholder="Revision comment / note (optional)..."
+                    [ngModel]="editDraftComment()"
+                    (ngModelChange)="editDraftComment.set($event)"
+                  />
+                  <button
+                    type="button"
+                    class="rd-btn rd-btn--ghost rd-btn--sm"
+                    (click)="cancelEditing()"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    class="rd-btn rd-btn--primary rd-btn--sm"
+                    [disabled]="savingEdit()"
+                    (click)="saveEditedFile()"
+                  >
+                    {{ savingEdit() ? 'Saving…' : 'Save Revision' }}
+                  </button>
+                </div>
+              </div>
+            } @else {
+              <div class="ws-code-table">
+                @for (line of numberedCodeLines(); track line.num) {
+                  <div class="ws-code-row">
+                    <span class="ws-code-row__num">{{ line.num }}</span>
+                    <span class="ws-code-row__text" [innerHTML]="line.html"></span>
+                  </div>
+                }
+              </div>
+            }
+          </section>
+        }
+
+        <!-- TAB 2: PAST VERSIONS & DIFF -->
+        @if (activeTab() === 'diff') {
+          <section class="ws-tab-panel ws-versions-panel">
+            <aside class="ws-versions-list" aria-label="Version history">
+              <div class="ws-versions-list__header">
+                Version History ({{ file.versions.length }})
+              </div>
+              @for (ver of file.versions; track ver.version) {
+                <div
+                  class="ws-version-card"
+                  [class.ws-version-card--active]="selectedVersion()?.version === ver.version"
+                  (click)="selectedVersionNum.set(ver.version)"
+                >
+                  <div class="ws-version-card__top">
+                    <span class="ws-badge ws-badge--ver">v{{ ver.version }}</span>
+                    @if (ver.agentKey) {
+                      <rd-agent-avatar [agentKey]="ver.agentKey" size="xs" />
+                    }
+                    <strong class="ws-version-card__author">
+                      {{ ver.agentName || 'Workspace Disk' }}
+                    </strong>
+                    <span class="ws-version-card__time">
+                      {{ ver.createdAt | relativeTime }}
+                    </span>
+                  </div>
+                  @if (ver.taskTitle) {
+                    <div class="ws-version-card__task">{{ ver.taskTitle }}</div>
+                  }
+                  @if (ver.agentComment) {
+                    <div class="ws-version-card__comment">{{ ver.agentComment }}</div>
+                  }
+                  <div class="ws-version-card__meta">
+                    <span>{{ ver.bytes | bytes }} · {{ ver.lineCount }} lines</span>
+                    <span class="ws-mono">{{ ver.sha256.slice(0, 8) }}</span>
+                    @if (store.canEdit() && ver.version !== file.currentVersion) {
+                      <button
+                        type="button"
+                        class="ws-restore-btn"
+                        [disabled]="savingEdit()"
+                        (click)="restoreVersion(ver); $event.stopPropagation()"
+                      >
+                        Restore v{{ ver.version }}
+                      </button>
+                    }
+                  </div>
+                </div>
+              }
+            </aside>
+
+            <div class="ws-diff-viewer">
+              @if (selectedVersion(); as curVer) {
+                <div class="ws-diff-toolbar">
+                  <div class="ws-diff-toolbar__left">
+                    <span>Inspecting <strong>v{{ curVer.version }}</strong> ({{ curVer.createdAt | date: 'short' }})</span>
+                    @if (file.versions.length > 1) {
+                      <label class="ws-diff-compare-label">
+                        <span>Compare against base:</span>
+                        <select
+                          class="rd-select ws-diff-select"
+                          [ngModel]="compareBaseVersion()?.version"
+                          (ngModelChange)="compareBaseVersionNum.set(+$event)"
+                        >
+                          @for (v of file.versions; track v.version) {
+                            <option [value]="v.version">
+                              v{{ v.version }} — {{ v.agentName || 'Disk' }} ({{ v.createdAt | relativeTime }})
+                            </option>
+                          }
+                        </select>
+                      </label>
+                    }
+                  </div>
+                  <div class="ws-diff-toolbar__stats">
+                    <span class="ws-diff-stat ws-diff-stat--add">+{{ diffStats().added }} added</span>
+                    <span class="ws-diff-stat ws-diff-stat--del">-{{ diffStats().removed }} removed</span>
+                  </div>
+                </div>
+
+                @if (curVer.agentComment) {
+                  <div class="ws-version-banner">
+                    <strong>v{{ curVer.version }} Agent Note:</strong> {{ curVer.agentComment }}
+                  </div>
+                }
+
+                <div class="ws-diff-table">
+                  @for (line of diffLines(); track $index) {
+                    <div
+                      class="ws-diff-line"
+                      [class.ws-diff-line--add]="line.kind === 'add'"
+                      [class.ws-diff-line--del]="line.kind === 'del'"
+                    >
+                      <span class="ws-diff-line__num">{{ line.oldLineNum ?? '' }}</span>
+                      <span class="ws-diff-line__num">{{ line.newLineNum ?? '' }}</span>
+                      <span class="ws-diff-line__marker">
+                        {{ line.kind === 'add' ? '+' : line.kind === 'del' ? '-' : ' ' }}
+                      </span>
+                      <span class="ws-diff-line__text" [innerHTML]="highlightDiffLine(line.text)"></span>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </section>
+        }
+
+        <!-- TAB 3: AGENT & OPERATOR COMMENTS -->
+        @if (activeTab() === 'comments') {
+          <section class="ws-tab-panel ws-comments-panel">
+            @if (store.canEdit()) {
+              <form class="ws-comment-form" (ngSubmit)="submitComment()">
+                <div class="ws-comment-form__top">
+                  <strong>Add Note / Comment on <code>{{ file.path }}</code></strong>
+                  <div class="ws-comment-form__lines">
+                    <label>
+                      Line start:
+                      <input
+                        type="number"
+                        min="1"
+                        class="rd-input ws-line-input"
+                        name="lineStart"
+                        placeholder="e.g. 10"
+                        [ngModel]="newCommentLineStart()"
+                        (ngModelChange)="newCommentLineStart.set($event)"
+                      />
+                    </label>
+                    <label>
+                      Line end:
+                      <input
+                        type="number"
+                        min="1"
+                        class="rd-input ws-line-input"
+                        name="lineEnd"
+                        placeholder="e.g. 25"
+                        [ngModel]="newCommentLineEnd()"
+                        (ngModelChange)="newCommentLineEnd.set($event)"
+                      />
+                    </label>
+                  </div>
+                </div>
+                <div class="ws-comment-form__row">
+                  <textarea
+                    class="rd-input ws-comment-form__textarea"
+                    name="commentBody"
+                    rows="2"
+                    placeholder="Write an architectural note, review comment, or instruction for agents on this file..."
+                    [ngModel]="newCommentBody()"
+                    (ngModelChange)="newCommentBody.set($event)"
+                  ></textarea>
+                  <button
+                    type="submit"
+                    class="rd-btn rd-btn--primary rd-btn--sm"
+                    [disabled]="!newCommentBody().trim() || submittingComment()"
+                  >
+                    <span>{{ submittingComment() ? 'Posting…' : 'Add Comment' }}</span>
+                  </button>
+                </div>
+              </form>
+            }
+
+            @if (file.comments.length === 0) {
+              <div class="ws-comments-empty">
+                No comments recorded on this file yet. Agents automatically attach comments when creating or editing files, or you can add a note above.
+              </div>
+            } @else {
+              <div class="ws-comments-list">
+                @for (c of file.comments; track c.id) {
+                  <article class="ws-comment-card">
+                    <header class="ws-comment-card__head">
+                      @if (c.agentKey) {
+                        <rd-agent-avatar [agentKey]="c.agentKey" size="xs" />
+                      }
+                      <strong class="ws-comment-card__author">{{ c.authorName }}</strong>
+                      <span class="ws-badge">
+                        {{ c.authorKind === 'AGENT' ? 'AGENT' : 'OPERATOR' }}
+                      </span>
+                      @if (c.lineStart) {
+                        <span class="ws-badge ws-badge--ver">
+                          Line{{ c.lineEnd && c.lineEnd !== c.lineStart ? 's ' + c.lineStart + '–' + c.lineEnd : ' ' + c.lineStart }}
+                        </span>
+                      }
+                      <span class="ws-comment-card__time">
+                        {{ c.createdAt | date: 'medium' }} ({{ c.createdAt | relativeTime }})
+                      </span>
+                    </header>
+                    <p class="ws-comment-card__body">{{ c.body }}</p>
+                  </article>
+                }
+              </div>
+            }
+          </section>
+        }
+
+        <!-- TAB 4: FILE INFO & MISCELLANEOUS METADATA -->
+        @if (activeTab() === 'info') {
+          <section class="ws-tab-panel ws-info-panel">
+            <div class="ws-info-grid">
+              <div class="ws-info-card">
+                <h3 class="ws-info-card__title">Filesystem &amp; Dates</h3>
+                <dl class="ws-meta-dl">
+                  <div>
+                    <dt>Relative /workspace/ Path</dt>
+                    <dd class="ws-mono">{{ file.misc.relativePath }}</dd>
+                  </div>
+                  <div>
+                    <dt>Absolute Disk Path</dt>
+                    <dd class="ws-mono">{{ file.misc.diskPath }}</dd>
+                  </div>
+                  <div>
+                    <dt>Exists on Disk</dt>
+                    <dd>{{ file.misc.existsOnDisk ? 'Yes (Synced)' : 'Artifact Only' }}</dd>
+                  </div>
+                  <div>
+                    <dt>Creation Date</dt>
+                    <dd>{{ file.createdAt | date: 'fullDate' }} · {{ file.createdAt | date: 'mediumTime' }}</dd>
+                  </div>
+                  <div>
+                    <dt>Last Modified Date</dt>
+                    <dd>{{ file.updatedAt | date: 'fullDate' }} · {{ file.updatedAt | date: 'mediumTime' }}</dd>
+                  </div>
+                  <div>
+                    <dt>Total Recorded Versions</dt>
+                    <dd>{{ file.versions.length }}</dd>
+                  </div>
+                </dl>
+              </div>
+
+              <div class="ws-info-card">
+                <h3 class="ws-info-card__title">Metrics, Checksum &amp; Encoding</h3>
+                <dl class="ws-meta-dl">
+                  <div>
+                    <dt>File Size</dt>
+                    <dd>{{ file.bytes | bytes }} ({{ file.bytes | number }} bytes)</dd>
+                  </div>
+                  <div>
+                    <dt>Lines / Words / Characters</dt>
+                    <dd>
+                      {{ file.misc.lineCount | number }} lines ·
+                      {{ file.misc.wordCount | number }} words ·
+                      {{ file.misc.charCount | number }} chars
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Estimated LLM Context Tokens</dt>
+                    <dd>~{{ file.misc.estimatedTokens | number }} tokens</dd>
+                  </div>
+                  <div>
+                    <dt>Encoding &amp; Line Endings</dt>
+                    <dd class="ws-mono">{{ file.misc.encoding }} · {{ file.misc.lineEndings }}</dd>
+                  </div>
+                  <div>
+                    <dt>SHA-256 Hash</dt>
+                    <dd class="ws-mono ws-hash">{{ file.misc.sha256 }}</dd>
+                  </div>
+                  @if (file.misc.className) {
+                    <div>
+                      <dt>Silicon Instance ClassName</dt>
+                      <dd class="ws-mono">{{ file.misc.className }}</dd>
+                    </div>
+                  }
+                </dl>
+              </div>
+
+              @if (file.misc.exportedSymbols.length > 0) {
+                <div class="ws-info-card">
+                  <h3 class="ws-info-card__title">
+                    Exported Symbols &amp; Signatures ({{ file.misc.exportedSymbols.length }})
+                  </h3>
+                  <ul class="ws-symbols-list">
+                    @for (sym of file.misc.exportedSymbols; track sym) {
+                      <li class="ws-mono">{{ sym }}</li>
+                    }
+                  </ul>
+                </div>
+              }
+
+              @if (file.misc.contributingAgents.length > 0) {
+                <div class="ws-info-card">
+                  <h3 class="ws-info-card__title">Contributing Studio Agents</h3>
+                  <div class="ws-contributors">
+                    @for (ag of file.misc.contributingAgents; track ag.agentKey) {
+                      <div class="ws-contributor-row">
+                        <rd-agent-avatar [agentKey]="ag.agentKey" size="sm" />
+                        <div>
+                          <strong>{{ ag.agentName }}</strong>
+                          <div class="ws-contributor-sub">
+                            {{ ag.versionCount }} version{{ ag.versionCount === 1 ? '' : 's' }} · Last touched {{ ag.lastTouchedAt | relativeTime }}
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+
+              @if (file.misc.companionPropertiesYaml) {
+                <div class="ws-info-card ws-info-card--full">
+                  <h3 class="ws-info-card__title">Companion Silicon Properties.yaml</h3>
+                  <pre class="ws-companion-pre"><code [innerHTML]="highlightYaml(file.misc.companionPropertiesYaml)"></code></pre>
+                </div>
+              }
+            </div>
+          </section>
+        }
+
+        <!-- TAB 5: SILICON DATAMODEL INSPECTOR -->
+        @if (activeTab() === 'inspector') {
+          <section class="ws-tab-panel ws-inspector-panel">
+            <div class="ws-inspector-card">
+              <div class="ws-inspector-header">
+                <div>
+                  <h3 class="ws-info-card__title">Silicon Instance &amp; Properties.yaml Inspector</h3>
+                  <p style="margin:4px 0 0;font-size:12px;color:#9ca3af;">
+                    Inspect and edit Roblox DataModel ClassName, Properties, Attributes, and CollectionService Tags synced via Silicon.
+                  </p>
+                </div>
+                @if (store.canEdit()) {
+                  <button
+                    type="button"
+                    class="rd-btn rd-btn--primary rd-btn--sm"
+                    [disabled]="savingInspector()"
+                    (click)="saveInspectorYaml()"
+                  >
+                    {{ savingInspector() ? 'Saving…' : 'Save Properties.yaml' }}
+                  </button>
+                }
+              </div>
+
+              <div class="ws-inspector-row">
+                <label class="rd-field">
+                  <span class="rd-label">Instance ClassName</span>
+                  <input
+                    type="text"
+                    class="rd-input"
+                    [disabled]="!store.canEdit()"
+                    [ngModel]="inspectorClassName()"
+                    (ngModelChange)="inspectorClassName.set($event)"
+                    placeholder="e.g. Part, Model, Script, ScreenGui, Folder"
+                  />
+                </label>
+                <label class="rd-field">
+                  <span class="rd-label">CollectionService Tags (comma-separated)</span>
+                  <input
+                    type="text"
+                    class="rd-input"
+                    [disabled]="!store.canEdit()"
+                    [ngModel]="inspectorTags()"
+                    (ngModelChange)="inspectorTags.set($event)"
+                    placeholder="e.g. Hazard, Interactive, Lava"
+                  />
+                </label>
+              </div>
+
+              <div class="ws-inspector-section">
+                <div class="ws-inspector-section__head">
+                  <strong>Instance Properties ({{ inspectorProperties().length }})</strong>
+                  @if (store.canEdit()) {
+                    <button
+                      type="button"
+                      class="rd-btn rd-btn--secondary rd-btn--sm"
+                      (click)="addInspectorProperty()"
+                    >
+                      + Add Property
+                    </button>
+                  }
+                </div>
+                @for (prop of inspectorProperties(); track $index) {
+                  <div class="ws-inspector-kv">
+                    <input
+                      type="text"
+                      class="rd-input"
+                      placeholder="Property name (e.g. Anchored, Size, BrickColor)"
+                      [disabled]="!store.canEdit()"
+                      [ngModel]="prop.key"
+                      (ngModelChange)="updateInspectorPropertyKey($index, $event)"
+                    />
+                    <input
+                      type="text"
+                      class="rd-input"
+                      placeholder="Value (e.g. true, {0, 10, 0}, [4, 1, 4])"
+                      [disabled]="!store.canEdit()"
+                      [ngModel]="prop.value"
+                      (ngModelChange)="updateInspectorPropertyValue($index, $event)"
+                    />
+                    @if (store.canEdit()) {
+                      <button
+                        type="button"
+                        class="rd-btn rd-btn--ghost rd-btn--sm"
+                        (click)="removeInspectorProperty($index)"
+                      >
+                        ✕
+                      </button>
+                    }
+                  </div>
+                }
+              </div>
+
+              <div class="ws-inspector-section">
+                <div class="ws-inspector-section__head">
+                  <strong>Custom Attributes ({{ inspectorAttributes().length }})</strong>
+                  @if (store.canEdit()) {
+                    <button
+                      type="button"
+                      class="rd-btn rd-btn--secondary rd-btn--sm"
+                      (click)="addInspectorAttribute()"
+                    >
+                      + Add Attribute
+                    </button>
+                  }
+                </div>
+                @for (attr of inspectorAttributes(); track $index) {
+                  <div class="ws-inspector-kv">
+                    <input
+                      type="text"
+                      class="rd-input"
+                      placeholder="Attribute name (e.g. Damage, Cooldown)"
+                      [disabled]="!store.canEdit()"
+                      [ngModel]="attr.key"
+                      (ngModelChange)="updateInspectorAttributeKey($index, $event)"
+                    />
+                    <input
+                      type="text"
+                      class="rd-input"
+                      placeholder="Attribute value"
+                      [disabled]="!store.canEdit()"
+                      [ngModel]="attr.value"
+                      (ngModelChange)="updateInspectorAttributeValue($index, $event)"
+                    />
+                    @if (store.canEdit()) {
+                      <button
+                        type="button"
+                        class="rd-btn rd-btn--ghost rd-btn--sm"
+                        (click)="removeInspectorAttribute($index)"
+                      >
+                        ✕
+                      </button>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+          </section>
+        }
+      }
+    </main>
+  </div>
+
+  <rd-dialog [(open)]="newFileDialogOpen" title="Create New File in /workspace/" width="520px">
+    <form class="ws-new-form" (ngSubmit)="submitNewFile()">
+      <label class="rd-field">
+        <span class="rd-label">Relative Path inside /workspace/</span>
+        <input
+          type="text"
+          class="rd-input"
+          name="newFilePath"
+          required
+          placeholder="e.g. src/index.ts or scripts/helper.py"
+          [ngModel]="newFilePath()"
+          (ngModelChange)="newFilePath.set($event)"
+        />
+      </label>
+      <label class="rd-field">
+        <span class="rd-label">File Content</span>
+        <textarea
+          class="rd-input ws-new-form__code"
+          name="newFileContent"
+          rows="10"
+          placeholder="Paste or write file contents..."
+          [ngModel]="newFileContent()"
+          (ngModelChange)="newFileContent.set($event)"
+        ></textarea>
+      </label>
+      <label class="rd-field">
+        <span class="rd-label">Comment / Note (optional)</span>
+        <input
+          type="text"
+          class="rd-input"
+          name="newFileComment"
+          placeholder="Describe what this file is for..."
+          [ngModel]="newFileComment()"
+          (ngModelChange)="newFileComment.set($event)"
+        />
+      </label>
+      <div class="ws-new-form__actions">
+        <button
+          type="button"
+          class="rd-btn rd-btn--ghost"
+          (click)="newFileDialogOpen.set(false)"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          class="rd-btn rd-btn--primary"
+          [disabled]="!newFilePath().trim() || savingEdit()"
+        >
+          {{ savingEdit() ? 'Creating…' : 'Create File' }}
+        </button>
+      </div>
+    </form>
+  </rd-dialog>
+</div>

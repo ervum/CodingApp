@@ -1,0 +1,55 @@
+@use 'rd';
+
+:host {
+  display: block;
+}
+
+.node__row {
+  width: 100%;
+  height: 30px;
+  padding-right: rd.space(3);
+  display: flex;
+  align-items: center;
+  gap: rd.space(1.5);
+  font-size: rd.fs('sm');
+  color: rd.color('text-2');
+  text-align: left;
+  @include rd.interactive;
+
+  &--folder {
+    font-weight: rd.fw('medium');
+    color: rd.color('text-1');
+  }
+}
+
+.node__chevron {
+  color: rd.color('text-3');
+  flex-shrink: 0;
+}
+
+.node__spacer {
+  width: 13px;
+  flex-shrink: 0;
+}
+
+.node__icon {
+  color: rd.color('text-3');
+  flex-shrink: 0;
+
+  &--folder {
+    color: rd.color('neon');
+  }
+}
+
+.node__name {
+  flex: 1;
+  min-width: 0;
+  @include rd.truncate(1);
+}
+
+.node__words {
+  font-family: var(--rd-font-mono);
+  font-size: rd.fs('2xs');
+  color: rd.color('text-3');
+  @include rd.numeric;
+}

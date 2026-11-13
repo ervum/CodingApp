@@ -1,0 +1,619 @@
+@use 'rd';
+
+:host {
+  display: block;
+  height: 100%;
+  overflow: auto;
+  @include rd.scrollbar;
+}
+
+.games {
+  padding: 24px 32px 48px;
+  max-width: rd.layout('content-max');
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.games__selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.games__selector-pill {
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: #12141e;
+  border: 1px solid #222533;
+  color: #9ca3af;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+
+  &.is-active {
+    background: rgba(124, 58, 237, 0.22);
+    border-color: #7c3aed;
+    color: #ffffff;
+  }
+}
+
+.games__overview-grid {
+  display: grid;
+  grid-template-columns: 380px minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+
+  @include rd.respond-below('lg') {
+    grid-template-columns: 1fr;
+  }
+}
+
+.games-card {
+  background: #12141e;
+  border: 1px solid #1f2232;
+  border-radius: 12px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.games-card__eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #a855f7;
+}
+
+.games-card__head-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.games-card__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #f3f4f6;
+}
+
+.games-card__sub {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.checklist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.checklist__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #0d0f17;
+  border: 1px solid #1f2334;
+  font-size: 13px;
+  color: #e5e7eb;
+}
+
+.checklist__check {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(34, 197, 94, 0.16);
+  color: #4ade80;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.open-work-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.open-work-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  background: #0d0f17;
+  border: 1px solid #1e2232;
+}
+
+.open-work-row__main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.open-work-row__title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #f3f4f6;
+  @include rd.truncate(1);
+}
+
+.open-work-row__meta {
+  font-size: 11px;
+  color: #6b7280;
+}
+
+.open-work-row__pill {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(245, 158, 11, 0.14);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: #fbbf24;
+}
+
+/* Mode B: Game Hero Header Card */
+.game-hero {
+  background: #12141e;
+  border: 1px solid #1f2232;
+  border-radius: 14px;
+  padding: 20px 24px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.game-hero__left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.game-hero__tile {
+  width: 64px;
+  height: 64px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #8b5cf6, #ec4899);
+  color: #ffffff;
+  font-size: 22px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+.game-hero__info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.game-hero__title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.game-hero__title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.game-hero__badge {
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: #1a1d2b;
+  border: 1px solid #2b3044;
+  color: #c4b5fd;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.game-hero__summary {
+  margin: 0;
+  font-size: 13px;
+  color: #9ca3af;
+}
+
+.game-hero__tabs {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px;
+  border-radius: 9px;
+  background: #0d0f17;
+  border: 1px solid #222533;
+}
+
+.game-hero__tab {
+  height: 30px;
+  padding: 0 14px;
+  border-radius: 6px;
+  background: transparent;
+  border: 0;
+  color: #9ca3af;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+
+  &.is-active {
+    background: #1f2334;
+    color: #ffffff;
+  }
+}
+
+/* Live Numbers */
+.live-numbers {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.attention-banner {
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.attention-banner__left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.attention-banner__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #f59e0b;
+}
+
+.attention-banner__text {
+  font-size: 13px;
+  color: #fde68a;
+}
+
+.attention-banner__btn {
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 6px;
+  background: #181b28;
+  border: 1px solid #2d3248;
+  color: #f3f4f6;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+
+  @include rd.respond-below('lg') {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.kpi-card {
+  background: #12141e;
+  border: 1px solid #1f2232;
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.kpi-card__label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #6b7280;
+}
+
+.kpi-card__value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff;
+  font-family: var(--rd-font-mono);
+}
+
+.live-subnav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.live-subnav__pill {
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: #12141e;
+  border: 1px solid #222533;
+  color: #9ca3af;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+
+  &.is-active {
+    background: #1d2030;
+    border-color: #7c3aed;
+    color: #ffffff;
+  }
+}
+
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+
+  @include rd.respond-below('md') {
+    grid-template-columns: 1fr;
+  }
+}
+
+.chart-card {
+  background: #12141e;
+  border: 1px solid #1f2232;
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.chart-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.chart-card__title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #f3f4f6;
+}
+
+.chart-card__delta {
+  font-size: 11px;
+  color: #6b7280;
+}
+
+.chart-card__latest {
+  font-family: var(--rd-font-mono);
+  font-size: 15px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.chart-card__svg {
+  width: 100%;
+  height: 64px;
+}
+
+.breakdowns-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+
+  @include rd.respond-below('lg') {
+    grid-template-columns: 1fr;
+  }
+}
+
+.breakdown-card {
+  background: #12141e;
+  border: 1px solid #1f2232;
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.breakdown-card__title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #f3f4f6;
+}
+
+.breakdown-card__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.breakdown-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.breakdown-row__top {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #d1d5db;
+}
+
+.breakdown-row__val {
+  font-family: var(--rd-font-mono);
+  color: #9ca3af;
+}
+
+.breakdown-row__bar {
+  height: 4px;
+  border-radius: 999px;
+  background: #1c1f2e;
+  overflow: hidden;
+}
+
+.breakdown-row__fill {
+  height: 100%;
+  background: #8b5cf6;
+}
+
+/* 9-Stage Horizontal Kanban Board */
+.kanban-wrap {
+  overflow-x: auto;
+  padding-bottom: 8px;
+  @include rd.scrollbar(6px);
+}
+
+.kanban-board {
+  display: grid;
+  grid-template-columns: repeat(9, minmax(195px, 1fr));
+  gap: 10px;
+  min-width: 1780px;
+}
+
+.kanban-col {
+  background: #12141e;
+  border: 1px solid #1f2232;
+  border-radius: 10px;
+  padding: 12px;
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.kanban-col__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.kanban-col__title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #e5e7eb;
+}
+
+.kanban-col__count {
+  font-size: 11px;
+  font-family: var(--rd-font-mono);
+  color: #6b7280;
+}
+
+.kanban-col__body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.kanban-card {
+  width: 100%;
+  text-align: left;
+  padding: 12px;
+  border-radius: 8px;
+  background: #181b28;
+  border: 1px solid #2b3048;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  cursor: pointer;
+
+  &:hover {
+    border-color: #8b5cf6;
+  }
+}
+
+.kanban-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.kanban-card__name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.kanban-card__ver {
+  font-size: 10px;
+  color: #c4b5fd;
+  font-family: var(--rd-font-mono);
+}
+
+.kanban-card__status {
+  font-size: 11px;
+  font-weight: 600;
+  color: #4ade80;
+}
+
+.kanban-card__path {
+  font-size: 10px;
+  font-family: var(--rd-font-mono);
+  color: #6b7280;
+}
+
+.kanban-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.kanban-modal__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #0d0f17;
+  border: 1px solid #222638;
+}
+
+.kanban-modal__label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #6b7280;
+}
+
+.kanban-modal__code {
+  font-family: var(--rd-font-mono);
+  font-size: 12px;
+  color: #c4b5fd;
+}
+
+.kanban-modal__approved {
+  font-size: 12px;
+  font-weight: 700;
+  color: #4ade80;
+}
+
+.kanban-modal__summary {
+  margin: 0;
+  font-size: 13px;
+  color: #d1d5db;
+  line-height: 1.5;
+}

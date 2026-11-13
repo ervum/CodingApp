@@ -1,0 +1,20 @@
+@use 'rd';
+
+:host {
+  display: block;
+}
+
+.progress {
+  width: 100%;
+  height: 6px;
+  border-radius: rd.radius('pill');
+  background: rd.color('bg-3');
+  overflow: hidden;
+}
+
+.progress__fill {
+  height: 100%;
+  border-radius: rd.radius('pill');
+  background: linear-gradient(90deg, var(--game-accent, rd.color('primary')), rd.color('neon'));
+  transition: width rd.dur('base') rd.ease('standard');
+}

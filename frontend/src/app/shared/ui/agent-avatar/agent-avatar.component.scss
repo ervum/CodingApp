@@ -1,0 +1,63 @@
+@use 'rd';
+
+:host {
+  display: inline-block;
+  flex: none;
+  position: relative;
+}
+
+.avatar {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--rd-agent-color) 16%, #131520);
+  border: 1px solid color-mix(in srgb, var(--rd-agent-color) 42%, transparent);
+  color: var(--rd-agent-color);
+  transition:
+    transform rd.dur('fast') rd.ease('standard'),
+    background-color rd.dur('fast') rd.ease('standard');
+}
+
+:host([data-size='xs']) .avatar {
+  width: 22px;
+  height: 22px;
+}
+
+:host([data-size='sm']) .avatar {
+  width: 28px;
+  height: 28px;
+}
+
+:host([data-size='md']) .avatar {
+  width: 32px;
+  height: 32px;
+}
+
+:host([data-size='lg']) .avatar {
+  width: 44px;
+  height: 44px;
+}
+
+:host([data-status='OFFLINE']) .avatar {
+  opacity: 0.72;
+}
+
+.avatar__dot {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+
+  &[data-status='WORKING'] {
+    @include rd.glow-indicator(rd.raw-color('success'), 8px, true);
+  }
+  &[data-status='WAITING_ON_HUMAN'] {
+    @include rd.glow-indicator(rd.raw-color('warning'), 8px, false);
+  }
+  &[data-status='ERROR'],
+  &[data-status='BLOCKED'] {
+    @include rd.glow-indicator(rd.raw-color('danger'), 8px, true);
+  }
+}

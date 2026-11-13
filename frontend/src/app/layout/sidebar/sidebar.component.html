@@ -1,0 +1,67 @@
+<rd-studio-switcher />
+
+<button
+  type="button"
+  class="sidebar__search"
+  (click)="openPalette.emit()"
+  aria-label="Search or jump to..."
+>
+  <rd-icon name="search" [size]="14" />
+  <span class="sidebar__label">Search or jump to...</span>
+  <rd-kbd [keys]="['Ctrl K']" />
+</button>
+
+<nav class="sidebar__nav" aria-label="Studio navigation" (click)="navigate.emit()">
+  <div class="sidebar__section-label">WORKSPACE</div>
+  <rd-nav-link
+    icon="home"
+    label="Home"
+    [link]="['/s', slug(), 'home']"
+    [badge]="badges().home"
+    badgeTone="warning"
+  />
+  <rd-nav-link
+    icon="lead"
+    label="Lead"
+    [link]="['/s', slug(), 'lead']"
+  />
+  <rd-nav-link
+    icon="team"
+    label="Team"
+    [link]="['/s', slug(), 'team']"
+  />
+  <rd-nav-link
+    icon="tasks"
+    label="Tasks"
+    [link]="['/s', slug(), 'tasks']"
+  />
+  <rd-nav-link
+    icon="review"
+    label="Review"
+    [link]="['/s', slug(), 'review']"
+    [badge]="badges().review"
+    badgeTone="accent"
+  />
+  <rd-nav-link
+    icon="folder"
+    label="Workspace"
+    [link]="['/s', slug(), 'workspace']"
+  />
+
+  <div class="sidebar__section-label">STUDIO</div>
+  <rd-nav-link icon="games" label="Games" [link]="['/s', slug(), 'games']" />
+  <rd-nav-link
+    icon="pitches"
+    label="Pitches"
+    [link]="['/s', slug(), 'pitches']"
+    [badge]="badges().pitches"
+    badgeTone="accent"
+  />
+  <rd-nav-link icon="market" label="Market" [link]="['/s', slug(), 'market']" />
+  <rd-nav-link icon="library" label="Library" [link]="['/s', slug(), 'library']" />
+  <rd-nav-link icon="trending-up" label="Usage & Costs" [link]="['/s', slug(), 'usage']" />
+  <rd-nav-link icon="settings" label="Settings" [link]="['/s', slug(), 'settings']" />
+</nav>
+
+<rd-agent-matrix />
+<rd-execution-widget />

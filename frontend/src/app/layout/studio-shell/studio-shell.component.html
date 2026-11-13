@@ -1,0 +1,41 @@
+<rd-sidebar
+  class="shell__sidebar"
+  [class.is-open]="mobileSidebarOpen()"
+  (openPalette)="paletteOpen.set(true)"
+  (navigate)="mobileSidebarOpen.set(false)"
+/>
+
+@if (mobileSidebarOpen()) {
+  <div class="shell__scrim" (click)="mobileSidebarOpen.set(false)"></div>
+}
+
+<rd-context-bar
+  class="shell__topbar"
+  (openAsk)="askOpen.set(true)"
+  (openNewTask)="store.openNewTaskModal()"
+  (toggleMobileMenu)="mobileSidebarOpen.update((v) => !v)"
+/>
+
+<main class="shell__main">
+  @if (store.loadState() === 'error') {
+    <div class="rd-page">
+      <div class="rd-page__inner">
+        <rd-empty-state
+          icon="alert-triangle"
+          title="Could not load studio snapshot"
+          description="Check that the backend API is running and try again."
+        >
+          <button type="button" class="rd-btn rd-btn--primary" (click)="retryLoad()">
+            Retry
+          </button>
+        </rd-empty-state>
+      </div>
+    </div>
+  } @else {
+    <router-outlet />
+  }
+</main>
+
+<rd-command-palette [(open)]="paletteOpen" (openNewTask)="store.openNewTaskModal()" />
+<rd-ask-dialog [(open)]="askOpen" />
+<rd-new-task-dialog [(open)]="store.newTaskModalOpen" />

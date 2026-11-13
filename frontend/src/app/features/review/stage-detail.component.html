@@ -1,0 +1,57 @@
+<div class="stage-detail">
+  @if (payload(); as p) {
+    <section class="stage-detail__section">
+      <div class="stage-detail__head">
+        <h3 class="stage-detail__label">STAGE CHECKLIST</h3>
+        @if (p.buildVersion !== null) {
+          <span class="stage-detail__ver">v{{ p.buildVersion }}</span>
+        }
+      </div>
+      <ul class="stage-detail__checklist">
+        @for (item of p.checklist; track item.label) {
+          <li class="stage-detail__check" [class.is-done]="item.done">
+            <rd-icon [name]="item.done ? 'check' : 'clock'" [size]="14" />
+            <span>{{ item.label }}</span>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+
+  @if (sortedBlockers().length > 0) {
+    <section class="stage-detail__section">
+      <h3 class="stage-detail__label">QA FINDINGS & BLOCKERS ({{ sortedBlockers().length }})</h3>
+      <div class="stage-detail__blockers">
+        @for (b of sortedBlockers(); track b.id) {
+          <div class="blocker-card" [class.is-closed]="b.status !== 'OPEN'">
+            <div class="blocker-card__top">
+              <rd-status-pill [status]="b.severity" />
+              <span class="blocker-card__title">{{ b.title }}</span>
+              <span class="blocker-card__state">{{ b.status }}</span>
+            </div>
+            <p class="blocker-card__detail">{{ b.detail }}</p>
+            @if (b.status === 'OPEN' && canEdit()) {
+              <div class="blocker-card__actions">
+                <button
+                  type="button"
+                  class="rd-btn rd-btn--success rd-btn--sm"
+                  (click)="resolveBlocker.emit({ id: b.id, status: 'RESOLVED' })"
+                >
+                  <rd-icon name="check" [size]="12" />
+                  <span>Mark resolved</span>
+                </button>
+                <button
+                  type="button"
+                  class="rd-btn rd-btn--ghost rd-btn--sm"
+                  (click)="resolveBlocker.emit({ id: b.id, status: 'WAIVED' })"
+                >
+                  <span>Waive</span>
+                </button>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </section>
+  }
+</div>

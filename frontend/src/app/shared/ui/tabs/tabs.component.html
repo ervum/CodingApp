@@ -1,0 +1,18 @@
+<div class="tabs" role="tablist">
+  @for (tab of tabs(); track tab.id; let i = $index) {
+    <button
+      type="button"
+      role="tab"
+      class="tabs__tab"
+      [class.is-active]="active() === tab.id"
+      [attr.aria-selected]="active() === tab.id"
+      (click)="select(tab.id)"
+      (keydown)="onKeydown($event, i)"
+    >
+      <span>{{ tab.label }}</span>
+      @if (tab.count !== undefined && tab.count > 0) {
+        <rd-count-badge [count]="tab.count" [tone]="active() === tab.id ? 'accent' : 'neutral'" />
+      }
+    </button>
+  }
+</div>

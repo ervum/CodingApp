@@ -1,0 +1,23 @@
+<header class="greeting">
+  <div class="greeting__titles">
+    <p class="greeting__date">{{ dateLine() }}</p>
+    <h1 class="greeting__title">
+      <span>{{ greetingPrefix() }}</span><span class="greeting__name">{{ firstName() }}</span>
+    </h1>
+  </div>
+  <div class="greeting__pills" role="status" aria-label="Studio status summary">
+    <span class="greeting__pill greeting__pill--amber">
+      <span class="greeting__dot greeting__dot--amber"></span>
+      <span>{{ needsYouLabel() }}</span>
+    </span>
+    <span class="greeting__pill">
+      <span class="greeting__dot"></span>
+      <span>{{ workingLabel() }}</span>
+    </span>
+    <span class="greeting__pill">
+      <span class="greeting__dot"></span>
+      <span>{{ queuedLabel() }}</span>
+    </span>
+    <span class="greeting__last-change">last change just now</span>
+  </div>
+</header>

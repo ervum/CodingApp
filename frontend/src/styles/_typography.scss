@@ -1,0 +1,12 @@
+@use 'sass:map';
+@use 'tokens' as t;
+.rd-display { font-size: t.fs('3xl'); font-weight: t.fw('semibold'); letter-spacing: map.get(t.$letter-spacing, 'display'); line-height: t.lh('tight'); }
+.rd-h1 { font-size: t.fs('2xl'); font-weight: t.fw('semibold'); letter-spacing: map.get(t.$letter-spacing, 'tight'); line-height: t.lh('tight'); }
+.rd-h2 { font-size: t.fs('xl'); font-weight: t.fw('semibold'); line-height: t.lh('snug'); }
+.rd-h3 { font-size: t.fs('lg'); font-weight: t.fw('semibold'); line-height: t.lh('snug'); }
+.rd-body { font-size: t.fs('base'); line-height: t.lh('normal'); }
+.rd-small { font-size: t.fs('sm'); color: t.color('text-2'); }
+.rd-muted { color: t.color('text-3'); }
+.rd-label { font-size: t.fs('2xs'); font-weight: t.fw('semibold'); letter-spacing: map.get(t.$letter-spacing, 'caps'); text-transform: uppercase; color: t.color('text-3'); }
+.rd-mono { font-family: var(--rd-font-mono); font-size: t.fs('sm'); }
+.rd-num { font-variant-numeric: tabular-nums; }

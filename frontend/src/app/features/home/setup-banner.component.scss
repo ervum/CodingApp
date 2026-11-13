@@ -1,0 +1,39 @@
+@use 'rd';
+
+:host {
+  display: block;
+}
+
+.setup-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: rd.space(3);
+  padding: rd.space(3) rd.space(4);
+  border-radius: rd.radius('lg');
+  background: rd.color('warning-soft');
+  border: 1px solid rd.color('warning');
+}
+
+.setup-banner__icon {
+  color: rd.color('warning');
+  display: inline-flex;
+  flex: none;
+}
+
+.setup-banner__copy {
+  flex: 1 1 240px;
+  min-width: 0;
+}
+
+.setup-banner__title {
+  font-size: rd.fs('md');
+  font-weight: rd.fw('semibold');
+  color: rd.color('text-1');
+}
+
+.setup-banner__sub {
+  font-size: rd.fs('xs');
+  color: rd.color('text-2');
+  margin-top: rd.space(0.5);
+}

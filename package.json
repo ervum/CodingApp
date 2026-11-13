@@ -1,0 +1,22 @@
+{
+  "name": "robdev-control-room",
+  "private": true,
+  "packageManager": "pnpm@10.18.2",
+  "engines": { "node": ">=22.0.0" },
+  "scripts": {
+    "build:shared": "pnpm --filter @robdev/shared build",
+    "dev": "pnpm build:shared && concurrently -k -n shared,api,web -c magenta,blue,green \"pnpm --filter @robdev/shared dev\" \"pnpm --filter @robdev/backend start:dev\" \"pnpm --filter @robdev/frontend start\"",
+    "build": "pnpm build:shared && pnpm --filter @robdev/backend build && pnpm --filter @robdev/frontend build",
+    "test": "pnpm build:shared && pnpm -r --workspace-concurrency=1 test",
+    "lint": "pnpm -r lint",
+    "db:up": "docker compose up -d postgres",
+    "db:migrate": "pnpm --filter @robdev/backend prisma:migrate",
+    "db:seed": "pnpm --filter @robdev/backend prisma:seed",
+    "db:reset": "pnpm --filter @robdev/backend prisma:reset"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.6",
+    "prettier": "^3.6.0",
+    "typescript": "~6.0.3"
+  }
+}

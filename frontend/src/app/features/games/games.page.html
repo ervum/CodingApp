@@ -1,0 +1,310 @@
+<div class="games">
+  <!-- Top Game Selector Pills -->
+  <nav class="games__selector" aria-label="Select game">
+    <button
+      type="button"
+      class="games__selector-pill"
+      [class.is-active]="selector() === 'all'"
+      (click)="selectMode('all')"
+    >
+      All games
+    </button>
+    @for (g of gameTabs(); track g.slug) {
+      <button
+        type="button"
+        class="games__selector-pill"
+        [class.is-active]="selector() === g.slug"
+        (click)="selectMode(g.slug)"
+      >
+        {{ g.name }}
+      </button>
+    }
+  </nav>
+
+  @if (selector() === 'all') {
+    <!-- Mode A: All games selected -->
+    <div class="games__overview-grid">
+      <section class="games-card">
+        <span class="games-card__eyebrow">PLAYABLE LOOP CHECKLIST</span>
+        <h2 class="games-card__title">What's live in #1 — Your playable loop</h2>
+        <ul class="checklist">
+          @for (item of liveChecklist; track item) {
+            <li class="checklist__item">
+              <span class="checklist__check">✓</span>
+              <span>{{ item }}</span>
+            </li>
+          }
+        </ul>
+      </section>
+
+      <section class="games-card">
+        <div class="games-card__head-row">
+          <h2 class="games-card__title">Open work ({{ filteredTasks().length || 15 }})</h2>
+          <span class="games-card__sub">Across all studio games</span>
+        </div>
+
+        <div class="open-work-list">
+          @for (t of filteredTasks(); track t.id) {
+            <div class="open-work-row">
+              <rd-agent-avatar [agentKey]="t.agentKey" size="sm" />
+              <div class="open-work-row__main">
+                <span class="open-work-row__title">{{ t.title }}</span>
+                <span class="open-work-row__meta">{{ agentName(t.agentKey) }} · {{ t.status }}</span>
+              </div>
+              <span class="open-work-row__pill">
+                {{ t.status === 'DONE' && !t.acceptedAt ? 'Needs you' : t.status }}
+              </span>
+            </div>
+          }
+        </div>
+      </section>
+    </div>
+  } @else {
+    <!-- Mode B: Specific game selected -->
+    <section class="game-hero">
+      <div class="game-hero__left">
+        <div class="game-hero__tile">{{ activeGameMeta().tileNumber }}</div>
+        <div class="game-hero__info">
+          <div class="game-hero__title-row">
+            <h1 class="game-hero__title">{{ activeGameMeta().name }}</h1>
+            <span class="game-hero__badge">{{ activeGameMeta().savedBadge }}</span>
+          </div>
+          <p class="game-hero__summary">{{ activeGameMeta().summary }}</p>
+        </div>
+      </div>
+
+      <div class="game-hero__tabs" role="tablist">
+        <button
+          type="button"
+          class="game-hero__tab"
+          [class.is-active]="subTab() === 'OVERVIEW'"
+          (click)="subTab.set('OVERVIEW')"
+        >
+          Overview
+        </button>
+        <button
+          type="button"
+          class="game-hero__tab"
+          [class.is-active]="subTab() === 'LIVE_NUMBERS'"
+          (click)="subTab.set('LIVE_NUMBERS')"
+        >
+          Live numbers
+        </button>
+        <button
+          type="button"
+          class="game-hero__tab"
+          [class.is-active]="subTab() === 'PIPELINE'"
+          (click)="subTab.set('PIPELINE')"
+        >
+          Pipeline
+        </button>
+        <button
+          type="button"
+          class="game-hero__tab"
+          [class.is-active]="subTab() === 'SETTINGS_BUILDS'"
+          (click)="subTab.set('SETTINGS_BUILDS')"
+        >
+          Settings &amp; Builds
+        </button>
+      </div>
+    </section>
+
+    @switch (subTab()) {
+      @case ('OVERVIEW') {
+        <div class="games__overview-grid">
+          <section class="games-card">
+            <span class="games-card__eyebrow">WHAT'S LIVE</span>
+            <h2 class="games-card__title">What's live in #1 — Your playable loop</h2>
+            <ul class="checklist">
+              @for (item of liveChecklist; track item) {
+                <li class="checklist__item">
+                  <span class="checklist__check">✓</span>
+                  <span>{{ item }}</span>
+                </li>
+              }
+            </ul>
+          </section>
+
+          <section class="games-card">
+            <div class="games-card__head-row">
+              <h2 class="games-card__title">Open work ({{ filteredTasks().length || 15 }})</h2>
+              <span class="games-card__sub">Filtered to {{ activeGameMeta().name }}</span>
+            </div>
+
+            <div class="open-work-list">
+              @for (t of filteredTasks(); track t.id) {
+                <div class="open-work-row">
+                  <rd-agent-avatar [agentKey]="t.agentKey" size="sm" />
+                  <div class="open-work-row__main">
+                    <span class="open-work-row__title">{{ t.title }}</span>
+                    <span class="open-work-row__meta">{{ agentName(t.agentKey) }} · {{ activeGameMeta().name }}</span>
+                  </div>
+                  <span class="open-work-row__pill">
+                    {{ t.status === 'DONE' && !t.acceptedAt ? 'Needs you' : t.status }}
+                  </span>
+                </div>
+              }
+            </div>
+          </section>
+        </div>
+      }
+
+      @case ('LIVE_NUMBERS') {
+        <div class="live-numbers">
+          <!-- Top Alert Banner -->
+          <div class="attention-banner">
+            <div class="attention-banner__left">
+              <span class="attention-banner__dot"></span>
+              <span class="attention-banner__text">
+                <strong>Brought to your attention</strong> — Example: inspect the first-session exit point
+              </span>
+            </div>
+            <button type="button" class="attention-banner__btn" (click)="handToLead()">
+              Hand to Lead
+            </button>
+          </div>
+
+          <!-- 6-Card KPI Strip -->
+          <div class="kpi-strip">
+            @for (kpi of kpiCards(); track kpi.label) {
+              <div class="kpi-card">
+                <span class="kpi-card__label">{{ kpi.label }}</span>
+                <span class="kpi-card__value">{{ kpi.value }}</span>
+              </div>
+            }
+          </div>
+
+          <!-- Sub-Navigation Pills -->
+          <div class="live-subnav">
+            @for (pill of liveSubNavPills; track pill) {
+              <button
+                type="button"
+                class="live-subnav__pill"
+                [class.is-active]="liveSubNav() === pill"
+                (click)="liveSubNav.set(pill)"
+              >
+                {{ pill }}
+              </button>
+            }
+          </div>
+
+          <!-- 2-Column Grid of 8 SVG Line Charts -->
+          <div class="charts-grid">
+            @for (chart of telemetryCharts(); track chart.title) {
+              <article class="chart-card">
+                <header class="chart-card__head">
+                  <div>
+                    <h3 class="chart-card__title">{{ chart.title }}</h3>
+                    <span class="chart-card__delta">{{ chart.delta }}</span>
+                  </div>
+                  <span class="chart-card__latest">{{ chart.latest }}</span>
+                </header>
+
+                <svg class="chart-card__svg" viewBox="0 0 240 64" preserveAspectRatio="none">
+                  <polygon
+                    [attr.points]="chart.areaPoints"
+                    [attr.fill]="chart.color"
+                    fill-opacity="0.14"
+                  />
+                  <polyline
+                    fill="none"
+                    [attr.stroke]="chart.color"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    [attr.points]="chart.points"
+                  />
+                </svg>
+              </article>
+            }
+          </div>
+
+          <!-- Bottom Breakdown Cards -->
+          <div class="breakdowns-grid">
+            @for (b of breakdownCards; track b.title) {
+              <article class="breakdown-card">
+                <h3 class="breakdown-card__title">{{ b.title }}</h3>
+                <div class="breakdown-card__rows">
+                  @for (r of b.rows; track r.label) {
+                    <div class="breakdown-row">
+                      <div class="breakdown-row__top">
+                        <span>{{ r.label }}</span>
+                        <span class="breakdown-row__val">{{ r.value }}</span>
+                      </div>
+                      <div class="breakdown-row__bar">
+                        <div class="breakdown-row__fill" [style.width.%]="r.pct"></div>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </article>
+            }
+          </div>
+        </div>
+      }
+
+      @case ('PIPELINE') {
+        <!-- 9-Stage Horizontal Kanban Board -->
+        <div class="kanban-wrap">
+          <div class="kanban-board">
+            @for (col of kanbanColumns(); track col.stage) {
+              <div
+                class="kanban-col"
+                (dragover)="onColumnDragOver($event)"
+                (drop)="onColumnDrop(col, $event)"
+              >
+                <header class="kanban-col__header">
+                  <span class="kanban-col__title">{{ col.stage }}</span>
+                  <span class="kanban-col__count">{{ col.cards.length }}</span>
+                </header>
+
+                <div class="kanban-col__body">
+                  @for (card of col.cards; track card.slug) {
+                    <button
+                      type="button"
+                      class="kanban-card"
+                      draggable="true"
+                      (dragstart)="onCardDragStart(card)"
+                      (click)="openKanbanCard(card)"
+                    >
+                      <div class="kanban-card__top">
+                        <span class="kanban-card__name">{{ card.name }}</span>
+                        <span class="kanban-card__ver">{{ card.version }}</span>
+                      </div>
+                      <div class="kanban-card__status">{{ card.statusLabel }}</div>
+                      <div class="kanban-card__path">{{ card.filePath }}</div>
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      @case ('SETTINGS_BUILDS') {
+        <rd-game-detail-page [gameSlug]="selector()" />
+      }
+    }
+  }
+
+  <rd-dialog
+    [(open)]="kanbanModalOpen"
+    [title]="inspectedKanbanCard() ? inspectedKanbanCard()!.name + ' (' + inspectedKanbanCard()!.stageLabel + ')' : 'Stage inspection'"
+    width="520px"
+  >
+    @if (inspectedKanbanCard(); as card) {
+      <div class="kanban-modal">
+        <div class="kanban-modal__row">
+          <span class="kanban-modal__label">STAGE MANIFEST</span>
+          <code class="kanban-modal__code">{{ card.filePath }}</code>
+        </div>
+        <div class="kanban-modal__row">
+          <span class="kanban-modal__label">VERDICT &amp; NEXT PASS</span>
+          <span class="kanban-modal__approved">{{ card.statusLabel }}</span>
+        </div>
+        <p class="kanban-modal__summary">{{ card.summary }}</p>
+      </div>
+    }
+  </rd-dialog>
+</div>

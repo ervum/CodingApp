@@ -1,0 +1,47 @@
+<div class="prompt-row">
+  <div class="prompt-bar" [class.is-focused]="focused()">
+    <input
+      type="text"
+      class="prompt-bar__input"
+      [placeholder]="placeholder()"
+      [disabled]="disabled()"
+      [ngModel]="text()"
+      (ngModelChange)="text.set($event)"
+      (focus)="focused.set(true)"
+      (blur)="focused.set(false)"
+      (keydown)="onKeydown($event)"
+      aria-label="Ask the Lead anything"
+    />
+  </div>
+
+  <div class="prompt-row__actions">
+    <button
+      type="button"
+      class="prompt-btn prompt-btn--ask"
+      [disabled]="disabled() || !text().trim()"
+      (click)="submit()"
+    >
+      <rd-icon name="sparkles" [size]="13" />
+      <span>Ask</span>
+    </button>
+
+    <button
+      type="button"
+      class="prompt-btn prompt-btn--dark"
+      (click)="openNewTask()"
+    >
+      <rd-icon name="plus" [size]="13" />
+      <span>New task</span>
+    </button>
+
+    <button
+      type="button"
+      class="prompt-btn prompt-btn--dark"
+      [disabled]="pausing()"
+      (click)="togglePauseAll()"
+    >
+      <rd-icon [name]="store.isPaused() ? 'play' : 'pause'" [size]="13" />
+      <span>{{ store.isPaused() ? 'Resume all' : 'Pause all' }}</span>
+    </button>
+  </div>
+</div>

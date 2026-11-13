@@ -1,0 +1,34 @@
+@use 'rd';
+
+:host {
+  display: block;
+}
+
+.callout {
+  @include rd.surface(2, 'lg');
+  padding: rd.space(4);
+  display: flex;
+  flex-direction: column;
+  gap: rd.space(1.5);
+  border-top: 2px solid rd.color('border-strong');
+
+  &[data-tone='positive'] {
+    border-top-color: rd.color('success');
+  }
+
+  &[data-tone='warning'] {
+    border-top-color: rd.color('warning');
+  }
+}
+
+.callout__label {
+  @include rd.section-label;
+}
+
+.callout__value {
+  font-family: var(--rd-font-mono);
+  font-size: rd.fs('2xl');
+  font-weight: rd.fw('semibold');
+  color: rd.color('text-1');
+  @include rd.numeric;
+}

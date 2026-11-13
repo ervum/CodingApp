@@ -1,0 +1,16 @@
+<div class="agent-list">
+  <header class="agent-list__header">
+    <h2 class="agent-list__title">Team</h2>
+    <span class="agent-list__sub">0 working · 5 need you</span>
+  </header>
+
+  <div class="agent-list__items">
+    @for (a of agents(); track a.key) {
+      <rd-agent-list-item
+        [agent]="a"
+        [selected]="selected() === a.key"
+        (select)="select.emit($event)"
+      />
+    }
+  </div>
+</div>

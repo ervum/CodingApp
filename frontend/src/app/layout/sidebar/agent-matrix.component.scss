@@ -1,0 +1,147 @@
+@use 'rd';
+
+:host {
+  display: block;
+  padding: 12px 14px 10px;
+  border-top: 1px solid #1C1E28;
+}
+
+.team-block__header {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6B7280;
+  margin-bottom: 10px;
+}
+
+.matrix {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  justify-items: center;
+}
+
+.matrix__cell {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--rd-agent-color) 16%, #131520);
+  border: 1px solid color-mix(in srgb, var(--rd-agent-color) 42%, transparent);
+  color: var(--rd-agent-color);
+  display: grid;
+  place-items: center;
+  text-decoration: none;
+  transition:
+    transform 120ms ease,
+    background-color 120ms ease,
+    border-color 120ms ease;
+
+  &:hover {
+    transform: translateY(-1px) scale(1.05);
+    background: color-mix(in srgb, var(--rd-agent-color) 26%, #161926);
+    border-color: var(--rd-agent-color);
+  }
+}
+
+.matrix__dot {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+
+  &[data-status='WORKING'] {
+    @include rd.glow-indicator(rd.raw-color('success'), 7px, true);
+  }
+  &[data-status='WAITING_ON_HUMAN'] {
+    @include rd.glow-indicator(rd.raw-color('warning'), 7px, false);
+  }
+  &[data-status='ERROR'],
+  &[data-status='BLOCKED'] {
+    @include rd.glow-indicator(rd.raw-color('danger'), 7px, true);
+  }
+}
+
+.team-block__status-row {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.team-block__idle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: #9CA3AF;
+  white-space: nowrap;
+}
+
+.team-block__idle-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #6B7280;
+}
+
+.team-block__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.team-block__browser-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #171925;
+  border: 1px solid #26293A;
+  color: #D1D5DB;
+  font-size: 10px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease;
+
+  &:hover:not(:disabled) {
+    background: #222638;
+    border-color: #3B4058;
+    color: #FFFFFF;
+  }
+
+  &.is-active {
+    background: rgba(168, 85, 247, 0.16);
+    border-color: rgba(168, 85, 247, 0.45);
+    color: #E9D5FF;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+}
+
+.team-block__wake {
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: #171925;
+  border: 1px solid #26293A;
+  color: #D1D5DB;
+  font-size: 11px;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color 120ms ease;
+
+  &:hover {
+    background: #222638;
+    color: #FFFFFF;
+  }
+}

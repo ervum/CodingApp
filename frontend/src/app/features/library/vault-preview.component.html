@@ -1,0 +1,7 @@
+<div class="preview rd-prose">
+  <rd-markdown-view
+    [markdown]="markdown()"
+    [resolveLink]="resolveLink()"
+    (wikilinkClick)="wikilinkClick.emit($event)"
+  />
+</div>

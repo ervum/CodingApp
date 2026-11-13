@@ -1,0 +1,12 @@
+<a
+  class="nav-link"
+  [routerLink]="link()"
+  routerLinkActive="is-selected"
+  [attr.aria-label]="label()"
+>
+  <rd-icon [name]="icon()" [size]="16" />
+  <span class="nav-link__label">{{ label() }}</span>
+  @if (badge() > 0) {
+    <rd-count-badge [count]="badge()" [tone]="badgeTone()" />
+  }
+</a>

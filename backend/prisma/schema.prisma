@@ -1,0 +1,1148 @@
+// RobDev Control Room — Prisma 7 schema
+// Datasource URL lives in prisma.config.ts (Prisma 7 convention).
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "esm"
+  runtime      = "nodejs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ───────────────────────────── Enums ─────────────────────────────
+
+enum MembershipRole {
+  OWNER
+  ADMIN
+  PRODUCER
+  VIEWER
+}
+
+enum LlmProvider {
+  OPENAI
+  ANTHROPIC
+  GOOGLE
+  GOOGLE_WEB
+  CLAUDE_WEB
+  CHATGPT_WEB
+  GEMINI_APP
+  CLAUDE_APP
+  GPT_APP
+  ANTIGRAVITY
+  CLAUDE_CODE
+  CODEX
+  XAI
+  OLLAMA
+  RUNPOD
+  OPENAI_COMPATIBLE
+}
+
+enum AgentKey {
+  lead
+  pulse
+  architect
+  builder
+  frame
+  scenic
+  balance
+  librarian
+  splash
+  producer
+  liveops
+  merchant
+  playtest
+  tester108
+  reviewer
+  browser
+}
+
+enum AgentStatus {
+  IDLE
+  WORKING
+  WAITING_ON_HUMAN
+  BLOCKED
+  PAUSED
+  ERROR
+  OFFLINE
+}
+
+enum AgentTool {
+  vault_search
+  vault_read
+  vault_update_document
+  delegate_task
+  request_human
+  save_artifact
+  market_query
+  create_pitch
+  generate_image
+  submit_for_review
+  flag_blocker
+  acquire_studio_lane
+  release_studio_lane
+  record_build
+  update_milestone
+  list_workspace_files
+  read_workspace_file
+  grep_workspace
+  edit_workspace_file
+  studio_inspect_tree
+  studio_read_script
+  studio_run_diagnostics
+  studio_run_playtest
+  run_terminal_command
+  comment_workspace_file
+  pc_observe
+  pc_act
+  pc_window
+  pc_sandbox
+  studio_direct
+  browser_navigate
+  browser_observe
+  browser_act
+  browser_extract
+  browser_tabs
+  asset_register
+  asset_search
+}
+
+enum ChatArchiveKind {
+  FRESH_START
+  BRANCH
+}
+
+enum TaskStatus {
+  QUEUED
+  RUNNING
+  NEEDS_HUMAN
+  BLOCKED
+  PAUSED
+  DONE
+  FAILED
+  CANCELLED
+}
+
+enum TaskPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum TaskOrigin {
+  USER
+  LEAD_DELEGATION
+  AGENT_DELEGATION
+  SYSTEM
+  REVIEW_FEEDBACK
+}
+
+enum RunStatus {
+  RUNNING
+  SUCCEEDED
+  FAILED
+  CANCELLED
+  INTERRUPTED
+  AWAITING_HUMAN
+}
+
+enum LogEntryKind {
+  SYSTEM
+  CONTEXT
+  TEXT
+  TOOL_CALL
+  TOOL_RESULT
+  HANDOFF
+  ERROR
+  USAGE
+}
+
+enum MessageAuthor {
+  USER
+  AGENT
+  SYSTEM
+}
+
+enum HumanRequestKind {
+  PICK_NEXT_GAME
+  TRY_IT
+  DECISION
+  INFO
+}
+
+enum HumanRequestStatus {
+  OPEN
+  RESOLVED
+  DISMISSED
+}
+
+enum ReviewKind {
+  ICON
+  THUMBNAIL
+  TRAILER
+  STORYBOARD
+  STAGE
+  PUBLISH
+}
+
+enum ReviewTab {
+  IMAGES_VIDEO
+  STAGES_PUBLISH
+}
+
+enum ReviewStatus {
+  TO_REVIEW
+  CHANGES_ASKED
+  APPROVED
+  REJECTED
+}
+
+enum Verdict {
+  APPROVE
+  ASK_CHANGES
+  REJECT
+}
+
+enum BlockerSeverity {
+  FIX_FIRST
+  SHOULD_FIX
+  NIT
+}
+
+enum BlockerStatus {
+  OPEN
+  RESOLVED
+  WAIVED
+}
+
+enum GameStatus {
+  CONCEPT
+  BLUEPRINT
+  BUILDING
+  TESTING
+  LIVE
+  PAUSED
+}
+
+enum BuildKind {
+  SAVED
+  PUBLISHED
+}
+
+enum MobilePassStatus {
+  NOT_STARTED
+  QUEUED
+  RUNNING
+  PASSED
+  FAILED
+}
+
+enum MilestoneStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+}
+
+enum PitchStatus {
+  DRAFT
+  PROPOSED
+  CHANGES_REQUESTED
+  PICKED
+  ARCHIVED
+}
+
+enum PitchSectionKey {
+  FIRST_60_SECONDS
+  FIVE_MINUTE_LOOP
+  MINUTES_10_30
+  MONETIZATION
+  COMPETITORS
+  RISKS
+}
+
+enum MarketSort {
+  TOP_EARNING     @map("top-earning")
+  TOP_PLAYING_NOW @map("top-playing-now")
+  UP_AND_COMING   @map("up-and-coming")
+  TOP_RATED       @map("top-rated")
+}
+
+enum DataSource {
+  LIVE
+  SEED
+  COMPUTED
+}
+
+enum IngestionStatus {
+  RUNNING
+  SUCCEEDED
+  PARTIAL
+  FAILED
+}
+
+enum AuthorKind {
+  USER
+  AGENT
+  DISK
+  SEED
+}
+
+enum StudioAssetKind {
+  MESH
+  AUDIO
+  DECAL
+  IMAGE
+  ANIMATION
+  OTHER
+}
+
+// ─────────────────────────── Identity ───────────────────────────
+
+model User {
+  id               String                  @id @default(cuid())
+  email            String                  @unique
+  passwordHash     String
+  displayName      String
+  avatarColor      String                  @default("#7C3AED")
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
+  memberships      StudioMembership[]
+  refreshTokens    RefreshToken[]
+  tasksCreated     Task[]                  @relation("TaskCreatedByUser")
+  messages         AgentMessage[]
+  verdicts         ReviewVerdict[]
+  vaultRevisions   VaultDocumentRevision[]
+  resolvedRequests HumanRequest[]          @relation("HumanRequestResolvedBy")
+  buildsRecorded   GameBuild[]
+  fileComments     WorkspaceFileComment[]
+  tasksAccepted    Task[]                  @relation("TaskAcceptedBy")
+}
+
+model RefreshToken {
+  id           String    @id @default(cuid())
+  userId       String
+  tokenHash    String    @unique
+  familyId     String
+  expiresAt    DateTime
+  revokedAt    DateTime?
+  replacedById String?
+  userAgent    String?
+  createdAt    DateTime  @default(now())
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([familyId])
+}
+
+model Studio {
+  id                     String             @id @default(cuid())
+  slug                   String             @unique
+  name                   String
+  workspaceLabel         String             @default("robdev")
+  isPaused               Boolean            @default(false)
+  pausedAt               DateTime?
+  browserHeadless        Boolean            @default(true)
+  autoDeleteCreatedChats Boolean            @default(false)
+  codingMode                          String                 @default("LOCAL_SYNC")
+  codingSyncTool                      String                 @default("SILICON")
+  contextMode                         String                 @default("ROBLOX")
+  allowTerminalWithoutPermission      Boolean                @default(false)
+  allowExternalFilesWithoutPermission Boolean                @default(false)
+  allowPcControlWithoutPermission     Boolean                @default(false)
+  pcIdleTakeoverSeconds               Int                    @default(60)
+  sandboxAccessPolicy                 String                 @default("ALLOW")
+  sandboxProviderKind                 String                 @default("LOCAL")
+  maxConcurrentSandboxes              Int                    @default(15)
+  allowAutoSaveVersion                Boolean                @default(true)
+  allowAutoPublish                    Boolean                @default(true)
+  robloxUniverseId                    String?
+  robloxPlaceId                       String?
+  openCloudApiKey                     String?
+  openCloudApiKeyCiphertext           String?
+  openCloudApiKeyIv                   String?
+  openCloudApiKeyTag                  String?
+  openCloudApiKeyLast4                String?
+  dailyTokenBudget                    Int?
+  dailyCostBudgetUsd                  Float?
+  perTaskTokenBudget                  Int?
+  createdAt                           DateTime               @default(now())
+  updatedAt                           DateTime               @updatedAt
+  memberships                         StudioMembership[]
+  llmConnections                      LlmConnection[]
+  agents                              Agent[]
+  games                               Game[]
+  lanes                               StudioLane[]
+  tasks                               Task[]
+  runs                                AgentRun[]
+  messages                            AgentMessage[]
+  humanRequests                       HumanRequest[]
+  media                               MediaFile[]
+  reviewItems                         ReviewItem[]
+  blockers                            Blocker[]
+  pitches                             Pitch[]
+  vaultFolders                        VaultFolder[]
+  vaultDocuments                      VaultDocument[]
+  assets                              StudioAsset[]
+  webChatSessions                     WebChatSession[]
+  workspaceFileComments               WorkspaceFileComment[]
+  chatArchives                        ChatArchive[]
+  playbooks                           Playbook[]
+}
+
+model StudioMembership {
+  id        String         @id @default(cuid())
+  studioId  String
+  userId    String
+  role      MembershipRole
+  createdAt DateTime       @default(now())
+  studio    Studio         @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([studioId, userId])
+  @@index([userId])
+}
+
+// ─────────────────────────── LLM config ───────────────────────────
+
+model LlmConnection {
+  id               String      @id @default(cuid())
+  studioId         String
+  provider         LlmProvider
+  label            String
+  baseUrl          String?
+  apiKeyCiphertext String?
+  apiKeyIv         String?
+  apiKeyTag        String?
+  apiKeyLast4      String?
+  inputCostPerMTok  Float?
+  outputCostPerMTok Float?
+  isEnabled        Boolean     @default(true)
+  lastVerifiedAt   DateTime?
+  lastError        String?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  studio           Studio      @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  textAgents       Agent[]     @relation("AgentTextConnection")
+  imageAgents      Agent[]     @relation("AgentImageConnection")
+
+  @@unique([studioId, label])
+}
+
+// ─────────────────────────── Agents ───────────────────────────
+
+model Agent {
+  id                String                  @id @default(cuid())
+  studioId          String
+  key               AgentKey
+  name              String
+  title             String
+  description       String
+  color             String
+  glyph             String
+  sortOrder         Int
+  systemPrompt      String                  @db.Text
+  tools             AgentTool[]
+  status            AgentStatus             @default(OFFLINE)
+  isEnabled         Boolean                 @default(true)
+  llmConnectionId   String?
+  modelId           String?
+  temperature       Float                   @default(0.4)
+  maxOutputTokens   Int                     @default(4096)
+  imageConnectionId String?
+  imageModelId      String?
+  currentTaskId     String?
+  currentRunId      String?
+  lastActivityAt    DateTime?
+  lastSnippet       String?
+  lastErrorCode     String?
+  lastErrorMessage  String?
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
+  studio            Studio                  @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  llmConnection     LlmConnection?          @relation("AgentTextConnection", fields: [llmConnectionId], references: [id], onDelete: SetNull)
+  imageConnection   LlmConnection?          @relation("AgentImageConnection", fields: [imageConnectionId], references: [id], onDelete: SetNull)
+  tasks             Task[]                  @relation("TaskAssignee")
+  tasksCreated      Task[]                  @relation("TaskCreatedByAgent")
+  runs              AgentRun[]
+  vaultBindings     AgentVaultBinding[]
+  messages          AgentMessage[]
+  humanRequests     HumanRequest[]
+  reviewItems       ReviewItem[]
+  blockers          Blocker[]
+  pitches           Pitch[]
+  builds            GameBuild[]
+  lanesHeld         StudioLane[]
+  vaultRevisions    VaultDocumentRevision[]
+  assetsCurated     StudioAsset[]
+  webChatSessions   WebChatSession[]
+  fileComments      WorkspaceFileComment[]
+  chatArchives      ChatArchive[]
+
+  @@unique([studioId, key])
+}
+
+model AgentVaultBinding {
+  id         String        @id @default(cuid())
+  agentId    String
+  documentId String
+  priority   Int
+  agent      Agent         @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  document   VaultDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([agentId, documentId])
+  @@index([documentId])
+}
+
+// ─────────────────────────── Games ───────────────────────────
+
+model Game {
+  id                     String          @id @default(cuid())
+  studioId               String
+  slug                   String
+  name                   String
+  genre                  String
+  description            String          @default("")
+  status                 GameStatus      @default(CONCEPT)
+  accentColor            String          @default("#A855F7")
+  robloxUniverseId       BigInt?
+  robloxPlaceId          BigInt?
+  iconMediaId            String?
+  latestSavedVersion     Int?
+  latestPublishedVersion Int?
+  createdFromPitchId     String?         @unique
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @updatedAt
+  studio                 Studio          @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  iconMedia              MediaFile?      @relation("GameIcon", fields: [iconMediaId], references: [id], onDelete: SetNull)
+  createdFromPitch       Pitch?          @relation(fields: [createdFromPitchId], references: [id], onDelete: SetNull)
+  milestones             GameMilestone[]
+  builds                 GameBuild[]
+  tasks                  Task[]
+  humanRequests          HumanRequest[]
+  reviewItems            ReviewItem[]
+  blockers               Blocker[]
+  lanesHeld              StudioLane[]
+
+  @@unique([studioId, slug])
+}
+
+model GameMilestone {
+  id          String          @id @default(cuid())
+  gameId      String
+  key         String
+  title       String
+  sortOrder   Int
+  status      MilestoneStatus @default(TODO)
+  completedAt DateTime?
+  game        Game            @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@unique([gameId, key])
+}
+
+model GameBuild {
+  id               String           @id @default(cuid())
+  gameId           String
+  version          Int
+  kind             BuildKind
+  notes            String           @default("")
+  createdByAgentId String?
+  createdByUserId  String?
+  mobilePassA      MobilePassStatus @default(NOT_STARTED)
+  mobilePassB      MobilePassStatus @default(NOT_STARTED)
+  createdAt        DateTime         @default(now())
+  game             Game             @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  createdByAgent   Agent?           @relation(fields: [createdByAgentId], references: [id], onDelete: SetNull)
+  createdByUser    User?            @relation(fields: [createdByUserId], references: [id], onDelete: SetNull)
+
+  @@unique([gameId, version, kind])
+  @@index([gameId, createdAt(sort: Desc)])
+}
+
+model StudioLane {
+  id            String    @id @default(cuid())
+  studioId      String
+  name          String
+  sortOrder     Int
+  heldByAgentId String?
+  heldForGameId String?
+  heldByRunId   String?
+  heldSince     DateTime?
+  studio        Studio    @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  heldByAgent   Agent?    @relation(fields: [heldByAgentId], references: [id], onDelete: SetNull)
+  heldForGame   Game?     @relation(fields: [heldForGameId], references: [id], onDelete: SetNull)
+
+  @@unique([studioId, name])
+}
+
+// ─────────────────────────── Tasks & runs ───────────────────────────
+
+model Task {
+  id               String           @id @default(cuid())
+  studioId         String
+  gameId           String?
+  agentId          String
+  parentTaskId     String?
+  createdByUserId  String?
+  createdByAgentId String?
+  origin           TaskOrigin
+  title            String
+  brief            String           @db.Text
+  status           TaskStatus       @default(QUEUED)
+  priority         TaskPriority     @default(NORMAL)
+  tags             String[]
+  attempts         Int              @default(0)
+  resultSummary    String?          @db.Text
+  metadata         Json?
+  queuedAt         DateTime         @default(now())
+  startedAt        DateTime?
+  completedAt      DateTime?
+  acceptedAt       DateTime?
+  acceptedByUserId String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  studio           Studio           @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  game             Game?            @relation(fields: [gameId], references: [id], onDelete: SetNull)
+  agent            Agent            @relation("TaskAssignee", fields: [agentId], references: [id], onDelete: Cascade)
+  parent           Task?            @relation("TaskTree", fields: [parentTaskId], references: [id], onDelete: SetNull)
+  children         Task[]           @relation("TaskTree")
+  createdByUser    User?            @relation("TaskCreatedByUser", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  createdByAgent   Agent?           @relation("TaskCreatedByAgent", fields: [createdByAgentId], references: [id], onDelete: SetNull)
+  acceptedByUser   User?            @relation("TaskAcceptedBy", fields: [acceptedByUserId], references: [id], onDelete: SetNull)
+  dependencies     TaskDependency[] @relation("TaskDeps")
+  dependents       TaskDependency[] @relation("TaskDependents")
+  runs             AgentRun[]
+  messages         AgentMessage[]
+  humanRequests    HumanRequest[]
+  reviewItems      ReviewItem[]
+  blockers         Blocker[]
+  webChatSessions  WebChatSession[]
+  fileComments     WorkspaceFileComment[]
+
+  @@index([studioId, status])
+  @@index([agentId, status])
+  @@index([gameId])
+  @@index([parentTaskId])
+}
+
+model TaskDependency {
+  taskId      String
+  dependsOnId String
+  task        Task   @relation("TaskDeps", fields: [taskId], references: [id], onDelete: Cascade)
+  dependsOn   Task   @relation("TaskDependents", fields: [dependsOnId], references: [id], onDelete: Cascade)
+
+  @@id([taskId, dependsOnId])
+}
+
+model ChatArchive {
+  id              String          @id @default(cuid())
+  studioId        String
+  agentId         String
+  kind            ChatArchiveKind
+  number          Int
+  createdByUserId String?
+  createdAt       DateTime        @default(now())
+  studio          Studio          @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  agent           Agent           @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  messages        AgentMessage[]
+  runs            AgentRun[]
+
+  @@unique([agentId, kind, number])
+  @@index([agentId, createdAt])
+}
+
+model AgentRun {
+  id              String              @id @default(cuid())
+  studioId        String
+  taskId          String
+  agentId         String
+  archiveId       String?
+  status          RunStatus           @default(RUNNING)
+  provider        LlmProvider
+  modelId         String
+  llmConnectionId String?
+  temperature     Float?
+  maxOutputTokens Int?
+  attempt         Int                 @default(1)
+  startedAt       DateTime            @default(now())
+  finishedAt      DateTime?
+  heartbeatAt     DateTime            @default(now())
+  inputTokens     Int                 @default(0)
+  outputTokens    Int                 @default(0)
+  toolCallCount   Int                 @default(0)
+  costUsd         Float?
+  summary         String?             @db.Text
+  errorCode       String?
+  errorMessage    String?             @db.Text
+  studio          Studio              @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  task            Task                @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  agent           Agent               @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  archive         ChatArchive?        @relation(fields: [archiveId], references: [id], onDelete: Cascade)
+  entries         RunLogEntry[]
+  artifacts       RunArtifact[]
+  injections      RunVaultInjection[]
+  reviewItems     ReviewItem[]
+  blockers        Blocker[]
+  pitches         Pitch[]
+  webChatSessions WebChatSession[]
+  fileComments    WorkspaceFileComment[]
+
+  @@index([agentId, startedAt(sort: Desc)])
+  @@index([agentId, archiveId, startedAt(sort: Desc)])
+  @@index([taskId])
+  @@index([studioId, status])
+}
+
+model RunLogEntry {
+  id        String       @id @default(cuid())
+  runId     String
+  seq       Int
+  kind      LogEntryKind
+  content   String       @db.Text
+  meta      Json?
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  run       AgentRun     @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@unique([runId, seq])
+}
+
+model RunArtifact {
+  id           String   @id @default(cuid())
+  runId        String
+  path         String
+  language     String
+  content      String   @db.Text
+  bytes        Int
+  agentComment String?  @db.Text
+  createdAt    DateTime @default(now())
+  run          AgentRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([runId])
+}
+
+model RunVaultInjection {
+  id              String        @id @default(cuid())
+  runId           String
+  documentId      String
+  documentVersion Int
+  estimatedTokens Int
+  truncated       Boolean       @default(false)
+  createdAt       DateTime      @default(now())
+  run             AgentRun      @relation(fields: [runId], references: [id], onDelete: Cascade)
+  document        VaultDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId, createdAt(sort: Desc)])
+  @@index([runId])
+}
+
+model AgentMessage {
+  id          String        @id @default(cuid())
+  studioId    String
+  agentId     String
+  archiveId   String?
+  author      MessageAuthor
+  userId      String?
+  taskId      String?
+  body        String        @db.Text
+  attachments Json?
+  directives  String[]      @default([])
+  createdAt   DateTime      @default(now())
+  studio      Studio        @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  agent       Agent         @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  archive     ChatArchive?  @relation(fields: [archiveId], references: [id], onDelete: Cascade)
+  user        User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  task        Task?         @relation(fields: [taskId], references: [id], onDelete: SetNull)
+
+  @@index([agentId, createdAt(sort: Desc)])
+  @@index([agentId, archiveId, createdAt(sort: Desc)])
+}
+
+// ─────────────────────── Human-in-the-loop ───────────────────────
+
+model HumanRequest {
+  id           String             @id @default(cuid())
+  studioId     String
+  kind         HumanRequestKind
+  status       HumanRequestStatus @default(OPEN)
+  title        String
+  body         String             @db.Text
+  gameId       String?
+  agentId      String?
+  taskId       String?
+  options      Json?
+  pitchIds     String[]
+  buildVersion Int?
+  resolution   String?            @db.Text
+  resolvedById String?
+  resolvedAt   DateTime?
+  createdAt    DateTime           @default(now())
+  studio       Studio             @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  game         Game?              @relation(fields: [gameId], references: [id], onDelete: SetNull)
+  agent        Agent?             @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  task         Task?              @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  resolvedBy   User?              @relation("HumanRequestResolvedBy", fields: [resolvedById], references: [id], onDelete: SetNull)
+
+  @@index([studioId, status])
+}
+
+model MediaFile {
+  id          String        @id @default(cuid())
+  studioId    String
+  storageKey  String        @unique
+  mimeType    String
+  width       Int?
+  height      Int?
+  bytes       Int
+  durationSec Float?
+  sha256      String
+  createdAt   DateTime      @default(now())
+  studio      Studio        @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  reviewItems ReviewItem[]
+  gameIcons   Game[]        @relation("GameIcon")
+  assets      StudioAsset[]
+}
+
+model ReviewItem {
+  id             String          @id @default(cuid())
+  studioId       String
+  gameId         String?
+  kind           ReviewKind
+  tab            ReviewTab
+  status         ReviewStatus    @default(TO_REVIEW)
+  title          String
+  description    String          @default("") @db.Text
+  madeByAgentId  String?
+  mediaId        String?
+  taskId         String?
+  runId          String?
+  payload        Json?
+  iteration      Int             @default(1)
+  previousItemId String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  studio         Studio          @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  game           Game?           @relation(fields: [gameId], references: [id], onDelete: SetNull)
+  madeByAgent    Agent?          @relation(fields: [madeByAgentId], references: [id], onDelete: SetNull)
+  media          MediaFile?      @relation(fields: [mediaId], references: [id], onDelete: SetNull)
+  task           Task?           @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  run            AgentRun?       @relation(fields: [runId], references: [id], onDelete: SetNull)
+  previousItem   ReviewItem?     @relation("ReviewIteration", fields: [previousItemId], references: [id], onDelete: SetNull)
+  nextItems      ReviewItem[]    @relation("ReviewIteration")
+  verdicts       ReviewVerdict[]
+  blockers       Blocker[]
+
+  @@index([studioId, tab, status])
+  @@index([gameId])
+}
+
+model ReviewVerdict {
+  id           String     @id @default(cuid())
+  reviewItemId String
+  userId       String
+  verdict      Verdict
+  feedback     String?    @db.Text
+  annotations  Json?
+  createdAt    DateTime   @default(now())
+  reviewItem   ReviewItem @relation(fields: [reviewItemId], references: [id], onDelete: Cascade)
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([reviewItemId])
+}
+
+model Blocker {
+  id           String          @id @default(cuid())
+  studioId     String
+  gameId       String?
+  taskId       String?
+  runId        String?
+  reviewItemId String?
+  agentId      String?
+  severity     BlockerSeverity
+  status       BlockerStatus   @default(OPEN)
+  title        String
+  detail       String          @db.Text
+  buildVersion Int?
+  createdAt    DateTime        @default(now())
+  resolvedAt   DateTime?
+  studio       Studio          @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  game         Game?           @relation(fields: [gameId], references: [id], onDelete: SetNull)
+  task         Task?           @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  run          AgentRun?       @relation(fields: [runId], references: [id], onDelete: SetNull)
+  reviewItem   ReviewItem?     @relation(fields: [reviewItemId], references: [id], onDelete: SetNull)
+  agent        Agent?          @relation(fields: [agentId], references: [id], onDelete: SetNull)
+
+  @@index([studioId, status])
+  @@index([reviewItemId])
+}
+
+// ─────────────────────────── Pitches ───────────────────────────
+
+model Pitch {
+  id               String         @id @default(cuid())
+  studioId         String
+  title            String
+  logline          String         @db.Text
+  genre            String
+  status           PitchStatus    @default(PROPOSED)
+  createdByAgentId String?
+  runId            String?
+  metrics          Json
+  whatChanged      String         @db.Text
+  howDifferent     String         @db.Text
+  comparables      Json
+  feedback         String?        @db.Text
+  pickedAt         DateTime?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  studio           Studio         @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  createdByAgent   Agent?         @relation(fields: [createdByAgentId], references: [id], onDelete: SetNull)
+  run              AgentRun?      @relation(fields: [runId], references: [id], onDelete: SetNull)
+  sections         PitchSection[]
+  game             Game?
+
+  @@index([studioId, status])
+}
+
+model PitchSection {
+  id        String          @id @default(cuid())
+  pitchId   String
+  key       PitchSectionKey
+  markdown  String          @db.Text
+  sortOrder Int
+  pitch     Pitch           @relation(fields: [pitchId], references: [id], onDelete: Cascade)
+
+  @@unique([pitchId, key])
+}
+
+// ─────────────────── Market intelligence (global) ───────────────────
+
+model MarketGame {
+  id          String            @id @default(cuid())
+  universeId  BigInt            @unique
+  rootPlaceId BigInt?
+  name        String
+  creatorName String
+  creatorType String?
+  genreL1     String?
+  genreL2     String?
+  iconUrl     String?
+  source      DataSource
+  firstSeenAt DateTime          @default(now())
+  lastSeenAt  DateTime          @default(now())
+  snapshots   MarketSnapshot[]
+  sortEntries MarketSortEntry[]
+}
+
+model MarketSnapshot {
+  id             String              @id @default(cuid())
+  marketGameId   String
+  ingestionRunId String?
+  capturedAt     DateTime
+  playing        Int
+  visits         BigInt
+  favoritedCount BigInt
+  upVotes        Int
+  downVotes      Int
+  maxPlayers     Int?
+  marketGame     MarketGame          @relation(fields: [marketGameId], references: [id], onDelete: Cascade)
+  ingestionRun   MarketIngestionRun? @relation(fields: [ingestionRunId], references: [id], onDelete: SetNull)
+
+  @@index([marketGameId, capturedAt(sort: Desc)])
+}
+
+model MarketSortEntry {
+  id             String             @id @default(cuid())
+  ingestionRunId String
+  sort           MarketSort
+  rank           Int
+  marketGameId   String
+  source         DataSource
+  ingestionRun   MarketIngestionRun @relation(fields: [ingestionRunId], references: [id], onDelete: Cascade)
+  marketGame     MarketGame         @relation(fields: [marketGameId], references: [id], onDelete: Cascade)
+
+  @@unique([ingestionRunId, sort, rank])
+  @@index([marketGameId])
+}
+
+model MarketIngestionRun {
+  id           String            @id @default(cuid())
+  status       IngestionStatus   @default(RUNNING)
+  source       DataSource
+  startedAt    DateTime          @default(now())
+  finishedAt   DateTime?
+  sortsFetched String[]
+  gamesFetched Int               @default(0)
+  requestCount Int               @default(0)
+  errorCode    String?
+  errorMessage String?           @db.Text
+  warnings     String[]
+  snapshots    MarketSnapshot[]
+  sortEntries  MarketSortEntry[]
+
+  @@index([status, startedAt(sort: Desc)])
+}
+
+// ─────────────────────────── Vault ───────────────────────────
+
+model VaultFolder {
+  id        String          @id @default(cuid())
+  studioId  String
+  parentId  String?
+  name      String
+  path      String
+  sortOrder Int
+  studio    Studio          @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  parent    VaultFolder?    @relation("VaultFolderTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children  VaultFolder[]   @relation("VaultFolderTree")
+  documents VaultDocument[]
+
+  @@unique([studioId, path])
+}
+
+model VaultDocument {
+  id               String                  @id @default(cuid())
+  studioId         String
+  folderId         String
+  path             String
+  title            String
+  markdown         String                  @db.Text
+  version          Int                     @default(1)
+  wordCount        Int                     @default(0)
+  charCount        Int                     @default(0)
+  tags             String[]
+  alwaysInject     Boolean                 @default(false)
+  contentHash      String
+  diskMtime        DateTime?
+  updatedByKind    AuthorKind              @default(SEED)
+  updatedByUserId  String?
+  updatedByAgentId String?
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
+  studio           Studio                  @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  folder           VaultFolder             @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  revisions        VaultDocumentRevision[]
+  outgoingLinks    VaultLink[]             @relation("LinkFrom")
+  incomingLinks    VaultLink[]             @relation("LinkTo")
+  agentBindings    AgentVaultBinding[]
+  injections       RunVaultInjection[]
+
+  @@unique([studioId, path])
+}
+
+model VaultDocumentRevision {
+  id            String        @id @default(cuid())
+  documentId    String
+  version       Int
+  markdown      String        @db.Text
+  authorKind    AuthorKind
+  authorUserId  String?
+  authorAgentId String?
+  reason        String?
+  createdAt     DateTime      @default(now())
+  document      VaultDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  authorUser    User?         @relation(fields: [authorUserId], references: [id], onDelete: SetNull)
+  authorAgent   Agent?        @relation(fields: [authorAgentId], references: [id], onDelete: SetNull)
+
+  @@unique([documentId, version])
+}
+
+model VaultLink {
+  id             String         @id @default(cuid())
+  fromDocumentId String
+  toDocumentId   String?
+  targetPath     String
+  fromDocument   VaultDocument  @relation("LinkFrom", fields: [fromDocumentId], references: [id], onDelete: Cascade)
+  toDocument     VaultDocument? @relation("LinkTo", fields: [toDocumentId], references: [id], onDelete: SetNull)
+
+  @@unique([fromDocumentId, targetPath])
+  @@index([toDocumentId])
+}
+
+model StudioAsset {
+  id               String          @id @default(cuid())
+  studioId         String
+  kind             StudioAssetKind
+  name             String
+  tags             String[]
+  mediaId          String?
+  robloxAssetId    BigInt?
+  notes            String          @default("")
+  curatedByAgentId String?
+  createdAt        DateTime        @default(now())
+  studio           Studio          @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  media            MediaFile?      @relation(fields: [mediaId], references: [id], onDelete: SetNull)
+  curatedByAgent   Agent?          @relation(fields: [curatedByAgentId], references: [id], onDelete: SetNull)
+
+  @@index([studioId, kind])
+}
+
+model WebChatSession {
+  id               String    @id @default(cuid())
+  studioId         String
+  runId            String?
+  taskId           String?
+  rootTaskId       String?
+  agentId          String
+  agentKey         AgentKey
+  platform         String
+  guestMode        Boolean   @default(false)
+  externalChatId   String
+  chatTitle        String
+  chatUrl          String
+  status           String    @default("ACTIVE")
+  createdAt        DateTime  @default(now())
+  deletedFromWebAt DateTime?
+  studio           Studio    @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  agent            Agent     @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  run              AgentRun? @relation(fields: [runId], references: [id], onDelete: SetNull)
+  task             Task?     @relation(fields: [taskId], references: [id], onDelete: SetNull)
+
+  @@index([studioId, status])
+  @@index([agentId, createdAt(sort: Desc)])
+  @@index([runId])
+  @@index([rootTaskId])
+}
+
+model WorkspaceFileComment {
+  id         String        @id @default(cuid())
+  studioId   String
+  filePath   String        @map("path")
+  authorKind MessageAuthor @default(AGENT)
+  agentId    String?
+  agentKey   AgentKey?
+  userId     String?
+  runId      String?
+  taskId     String?
+  version    Int?
+  lineStart  Int?
+  lineEnd    Int?
+  body       String        @db.Text
+  createdAt  DateTime      @default(now())
+  studio     Studio        @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  agent      Agent?        @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  user       User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  run        AgentRun?     @relation(fields: [runId], references: [id], onDelete: SetNull)
+  task       Task?         @relation(fields: [taskId], references: [id], onDelete: SetNull)
+
+  @@index([studioId, filePath, createdAt(sort: Desc)])
+}
+
+model Playbook {
+  id                  String      @id @default(cuid())
+  studioId            String
+  key                 String
+  name                String
+  description         String      @default("")
+  steps               Json
+  suggestOnGameStatus GameStatus?
+  isBuiltIn           Boolean     @default(false)
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+  studio              Studio      @relation(fields: [studioId], references: [id], onDelete: Cascade)
+
+  @@unique([studioId, key])
+  @@index([studioId])
+}

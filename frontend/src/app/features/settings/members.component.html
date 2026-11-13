@@ -1,0 +1,75 @@
+<section class="members" aria-label="Studio members">
+  <header class="members__header">
+    <div>
+      <h2 class="members__title">STUDIO MEMBERS</h2>
+      <p class="rd-text-muted">Manage role-based access control for this studio.</p>
+    </div>
+
+    @if (store.isAdmin()) {
+      <form class="members__add" (ngSubmit)="addMember()">
+        <input
+          type="email"
+          class="rd-input"
+          name="email"
+          placeholder="operator@studio.dev"
+          [ngModel]="email()"
+          (ngModelChange)="email.set($event)"
+          required
+        />
+        <select
+          class="rd-select"
+          name="role"
+          [ngModel]="role()"
+          (ngModelChange)="role.set($event)"
+        >
+          <option value="ADMIN">ADMIN</option>
+          <option value="PRODUCER">PRODUCER</option>
+          <option value="VIEWER">VIEWER</option>
+        </select>
+        <button
+          type="submit"
+          class="rd-btn rd-btn--primary rd-btn--sm"
+          [disabled]="adding() || !email().trim()"
+        >
+          <span>Add member</span>
+        </button>
+      </form>
+    }
+  </header>
+
+  <div class="members__list">
+    @for (m of members(); track m.userId) {
+      <div class="member-row">
+        <span class="member-row__avatar" [style.--avatar-bg]="m.avatarColor">
+          {{ m.displayName.slice(0, 2).toUpperCase() }}
+        </span>
+        <div class="member-row__info">
+          <div class="member-row__name">{{ m.displayName }}</div>
+          <div class="member-row__email">{{ m.email }} · joined {{ m.joinedAt | relativeTime }}</div>
+        </div>
+        <div class="member-row__actions">
+          <select
+            class="rd-select member-row__role"
+            [disabled]="!store.isAdmin() || m.role === 'OWNER'"
+            [ngModel]="m.role"
+            (ngModelChange)="changeRole(m, $event)"
+          >
+            <option value="OWNER">OWNER</option>
+            <option value="ADMIN">ADMIN</option>
+            <option value="PRODUCER">PRODUCER</option>
+            <option value="VIEWER">VIEWER</option>
+          </select>
+          @if (store.isAdmin() && m.role !== 'OWNER') {
+            <button
+              type="button"
+              class="rd-btn rd-btn--ghost rd-btn--sm"
+              (click)="removeMember(m)"
+            >
+              <span>Remove</span>
+            </button>
+          }
+        </div>
+      </div>
+    }
+  </div>
+</section>

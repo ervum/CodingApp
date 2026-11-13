@@ -1,0 +1,240 @@
+<header class="drawer__header">
+  <div class="drawer__header-top">
+    <rd-status-pill [status]="detail().status" />
+    @if (detail().openFixFirst > 0) {
+      <rd-status-pill
+        status="FIX_FIRST"
+        [label]="'FIX FIRST ×' + detail().openFixFirst"
+      />
+    }
+    <div class="drawer__nav">
+      <button
+        type="button"
+        class="rd-btn rd-btn--ghost rd-btn--sm"
+        (click)="navigate.emit('prev')"
+        title="Previous item [K]"
+        aria-label="Previous item"
+      >
+        <rd-icon name="chevron-left" [size]="16" />
+      </button>
+      <button
+        type="button"
+        class="rd-btn rd-btn--ghost rd-btn--sm"
+        (click)="navigate.emit('next')"
+        title="Next item [J]"
+        aria-label="Next item"
+      >
+        <rd-icon name="chevron-right" [size]="16" />
+      </button>
+      <button
+        type="button"
+        class="rd-btn rd-btn--ghost rd-btn--sm"
+        (click)="close.emit()"
+        aria-label="Close inspection drawer"
+      >
+        <rd-icon name="x" [size]="16" />
+      </button>
+    </div>
+  </div>
+  <h2 class="drawer__title">{{ detail().title }}</h2>
+
+  @if (detail().previousIterations.length > 0) {
+    <div class="drawer__iterations">
+      @for (prev of detail().previousIterations; track prev.id) {
+        <button
+          type="button"
+          class="rd-btn rd-btn--ghost rd-btn--sm"
+          [class.is-active]="selectedIteration() === prev.iteration"
+          (click)="selectedIteration.set(prev.iteration); compareMode.set(false)"
+        >
+          v{{ prev.iteration }}
+        </button>
+      }
+      <button
+        type="button"
+        class="rd-btn rd-btn--ghost rd-btn--sm"
+        [class.is-active]="selectedIteration() === null && !compareMode()"
+        (click)="selectedIteration.set(null); compareMode.set(false)"
+      >
+        v{{ detail().iteration }} (Current)
+      </button>
+      @if (previousMediaUrl()) {
+        <button
+          type="button"
+          class="rd-btn rd-btn--secondary rd-btn--sm"
+          [class.is-active]="compareMode()"
+          (click)="compareMode.set(!compareMode())"
+        >
+          Before / After
+        </button>
+      }
+    </div>
+  }
+</header>
+
+<div class="drawer__body">
+  @if (detail().media; as media) {
+    @if (compareMode() && previousMediaUrl(); as prevUrl) {
+      <div class="drawer__compare-grid">
+        <div class="drawer__compare-col">
+          <span class="drawer__compare-label">Previous</span>
+          <img [src]="prevUrl" [alt]="detail().title + ' previous'" />
+        </div>
+        <div class="drawer__compare-col">
+          <span class="drawer__compare-label">Current (v{{ detail().iteration }})</span>
+          <img [src]="media.url" [alt]="detail().title" />
+        </div>
+      </div>
+    } @else {
+      <div
+        class="drawer__hero"
+        (click)="onHeroImageClick($event)"
+        title="Click image to pin an annotation box"
+      >
+        @if (isVideo()) {
+          <video [src]="activeMediaUrl() ?? media.url" controls preload="metadata"></video>
+        } @else {
+          <img [src]="activeMediaUrl() ?? media.url" [alt]="detail().title" />
+          @for (ann of annotations(); track $index) {
+            <div
+              class="drawer__annotation-box"
+              [style.left.%]="ann.x * 100"
+              [style.top.%]="ann.y * 100"
+              [style.width.%]="ann.w * 100"
+              [style.height.%]="ann.h * 100"
+              (click)="$event.stopPropagation()"
+            >
+              <span class="drawer__annotation-badge">#{{ $index + 1 }}</span>
+            </div>
+          }
+        }
+      </div>
+    }
+  }
+
+  <div class="drawer__meta">
+    @if (detail().media; as media) {
+      <span>
+        Made by {{ agentName() }} · v{{ detail().iteration }}
+        @if (media.width && media.height) { · {{ media.width }}×{{ media.height }} }
+        · {{ media.bytes | bytes }}
+      </span>
+    } @else {
+      <span>
+        Made by {{ agentName() }} · Iteration v{{ detail().iteration }}
+      </span>
+    }
+  </div>
+
+  @if (isImage() && detail().media; as media) {
+    <rd-small-preview-strip [src]="activeMediaUrl() ?? media.url" [aspect]="aspect()" />
+  }
+
+  @if (annotations().length > 0) {
+    <section class="drawer__section">
+      <h3 class="drawer__section-label">PINNED ANNOTATIONS ({{ annotations().length }})</h3>
+      <div class="drawer__annotations-list">
+        @for (ann of annotations(); track $index) {
+          <div class="drawer__annotation-row">
+            <span class="drawer__annotation-num">#{{ $index + 1 }}</span>
+            <input
+              type="text"
+              class="rd-input"
+              [ngModel]="ann.note"
+              (ngModelChange)="updateAnnotationNote($index, $event)"
+            />
+            <button
+              type="button"
+              class="rd-btn rd-btn--ghost rd-btn--sm"
+              (click)="removeAnnotation($index)"
+            >
+              ×
+            </button>
+          </div>
+        }
+      </div>
+    </section>
+  }
+
+  @if (detail().description) {
+    <section class="drawer__section">
+      <h3 class="drawer__section-label">DESCRIPTION</h3>
+      <rd-markdown-view [markdown]="detail().description" />
+    </section>
+  }
+
+  @if (detail().payload || detail().blockers.length > 0) {
+    <rd-stage-detail
+      [payload]="detail().payload"
+      [blockers]="detail().blockers"
+      [canEdit]="canAct()"
+      (resolveBlocker)="resolveBlocker.emit($event)"
+    />
+  }
+
+  @if (detail().verdicts.length > 0) {
+    <section class="drawer__section">
+      <h3 class="drawer__section-label">VERDICT HISTORY</h3>
+      <div class="drawer__history">
+        @for (v of detail().verdicts; track v.id) {
+          <div class="verdict-item">
+            <div class="verdict-item__top">
+              <span class="verdict-item__user">{{ v.userDisplayName }}</span>
+              <span class="verdict-item__verdict">{{ v.verdict }}</span>
+              <span class="verdict-item__time">{{ v.createdAt | relativeTime }}</span>
+            </div>
+            @if (v.feedback) {
+              <p class="verdict-item__feedback">{{ v.feedback }}</p>
+            }
+          </div>
+        }
+      </div>
+    </section>
+  }
+
+  <section class="drawer__section">
+    <label class="drawer__section-label" for="review-feedback">FEEDBACK FOR AGENT</label>
+    <textarea
+      #feedbackInput
+      id="review-feedback"
+      class="rd-textarea"
+      rows="3"
+      placeholder="Describe what to change (required for Ask for changes, Ctrl+Enter to submit)..."
+      [disabled]="!canAct() || busy()"
+      [ngModel]="feedback()"
+      (ngModelChange)="feedback.set($event)"
+      (keydown)="onFeedbackKeydown($event)"
+    ></textarea>
+  </section>
+</div>
+
+<footer class="drawer__footer">
+  <button
+    type="button"
+    class="rd-btn rd-btn--success drawer__verdict-btn"
+    data-testid="verdict-approve"
+    [disabled]="approveDisabled()"
+    [title]="approveTooltip()"
+    (click)="triggerApprove()"
+  >
+    <span>Approve [A]</span>
+  </button>
+  <button
+    type="button"
+    class="rd-btn rd-btn--warning drawer__verdict-btn"
+    data-testid="verdict-ask-changes"
+    [disabled]="!canAct() || busy()"
+    (click)="onAskChangesClick()"
+  >
+    <span>Ask for changes [C]</span>
+  </button>
+  <button
+    type="button"
+    class="rd-btn rd-btn--danger drawer__verdict-btn"
+    data-testid="verdict-reject"
+    [disabled]="!canAct() || busy()"
+    (click)="triggerReject()"
+  >
+    <span>Reject [X]</span>
+  </button>
+</footer>

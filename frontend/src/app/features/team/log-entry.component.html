@@ -1,0 +1,274 @@
+@switch (entry().kind) {
+  @case ('TEXT') {
+    <div class="log-entry log-entry--text">
+      <rd-markdown-view
+        [markdown]="entry().content"
+        [streaming]="streaming()"
+        [renderCodeAsArtifact]="true"
+        (wikilinkClick)="wikilinkClick.emit($event)"
+      />
+    </div>
+  }
+  @case ('SYSTEM') {
+    @if (entry().meta?.isThinking) {
+      <details
+        class="log-entry log-entry--thinking"
+        [class.is-thinking-active]="isThinkingActive()"
+        [open]="isThinkingActive() || (!collapseThinkingByDefault() && entry().content.trim().length > 0)"
+      >
+        <summary class="thinking__summary">
+          <span
+            class="thinking__dot"
+            [class.is-active]="isThinkingActive()"
+            aria-hidden="true"
+          ></span>
+          <span class="thinking__title">
+            @if (isThinkingActive()) {
+              Thinking…
+            } @else {
+              Thought for {{ thinkingDurationLabel() }}
+            }
+          </span>
+          @if (isThinkingActive()) {
+            <span class="thinking__timer">{{ thinkingDurationLabel() }}</span>
+          }
+          <span class="thinking__hint">
+            {{ isThinkingActive() ? 'Formulating response' : 'Click to toggle thoughts' }}
+          </span>
+        </summary>
+        <div class="thinking__body">
+          @if (formattedThinkingMarkdown().length > 0) {
+            <rd-markdown-view
+              [markdown]="formattedThinkingMarkdown()"
+              [streaming]="isThinkingActive()"
+              (wikilinkClick)="wikilinkClick.emit($event)"
+            />
+          } @else {
+            <p class="thinking__placeholder">
+              @if (isThinkingActive()) {
+                Reasoning through prompt and context… ({{ thinkingDurationLabel() }})
+              } @else {
+                Model reasoned for {{ thinkingDurationLabel() }} before generating the response.
+              }
+            </p>
+          }
+        </div>
+      </details>
+    } @else if (entry().meta?.createdArtifact; as art) {
+      <details class="log-entry log-entry--created-artifact" open>
+        <summary class="created-artifact__summary">
+          <span class="created-artifact__badge">
+            @switch (art.kind) {
+              @case ('artifact') { FILE / ARTIFACT }
+              @case ('vault_doc') { VAULT DOC }
+              @case ('image') { IMAGE }
+              @case ('review_item') { REVIEW ITEM }
+              @case ('pitch') { PITCH }
+              @default { OUTPUT }
+            }
+          </span>
+          @if (art.path && art.kind !== 'vault_doc') {
+            <a
+              href="#"
+              class="rd-filepath-link created-artifact__title"
+              [title]="'Click to choose which app opens ' + art.path"
+              (click)="onOpenFilePath(art.path, $event)"
+            >
+              {{ art.path }}
+            </a>
+          } @else {
+            <span class="created-artifact__title">{{ art.path ?? art.title ?? entry().content }}</span>
+          }
+          @if (art.version !== undefined) {
+            <span class="created-artifact__meta">v{{ art.version }}</span>
+          }
+          @if (art.bytes !== undefined && art.bytes > 0) {
+            <span class="created-artifact__meta">{{ art.bytes | bytes }}</span>
+          }
+          @if (art.path && art.kind !== 'vault_doc') {
+            <button
+              type="button"
+              class="created-artifact__open-btn"
+              title="Choose an application to open this file"
+              (click)="onOpenFilePath(art.path, $event)"
+            >
+              Open with…
+            </button>
+          }
+          @if (art.kind === 'vault_doc' && art.id) {
+            <a
+              class="created-artifact__link"
+              [routerLink]="['/s', studioSlug(), 'library']"
+              [queryParams]="{ doc: art.id }"
+              (click)="$event.stopPropagation()"
+            >
+              Open in Library →
+            </a>
+          } @else if (art.kind === 'review_item') {
+            <a
+              class="created-artifact__link"
+              [routerLink]="['/s', studioSlug(), 'review']"
+              (click)="$event.stopPropagation()"
+            >
+              Open in Review →
+            </a>
+          } @else if (art.kind === 'pitch') {
+            <a
+              class="created-artifact__link"
+              [routerLink]="['/s', studioSlug(), 'pitches']"
+              (click)="$event.stopPropagation()"
+            >
+              Open in Pitches →
+            </a>
+          }
+        </summary>
+        <div class="created-artifact__body">
+          @if (art.mediaId || (art.kind === 'image' && art.path)) {
+            <div class="created-artifact__media">
+              <img
+                class="created-artifact__img"
+                [src]="mediaUrlFor(art.mediaId) || fileUrlFor(art.path)"
+                [alt]="art.title ?? art.path ?? 'Generated image'"
+                loading="lazy"
+              />
+            </div>
+          }
+          @if (art.content) {
+            @if (art.kind === 'artifact' && art.language && art.language !== 'markdown') {
+              <pre class="created-artifact__code"><code [innerHTML]="highlightCode(art.content, art.language)"></code></pre>
+            } @else {
+              <rd-markdown-view
+                [markdown]="art.content"
+                (wikilinkClick)="wikilinkClick.emit($event)"
+              />
+            }
+          }
+        </div>
+      </details>
+    } @else {
+      <div class="log-entry log-entry--system">
+        <span>{{ entry().content }}</span>
+      </div>
+    }
+  }
+  @case ('CONTEXT') {
+    <div class="log-entry log-entry--context">
+      <span class="log-entry__label">Vault Context:</span>
+      <div class="log-entry__chips">
+        @for (doc of entry().meta?.docs ?? []; track doc.documentId) {
+          <a
+            class="doc-chip"
+            [routerLink]="['/s', studioSlug(), 'library']"
+            [queryParams]="{ doc: doc.documentId }"
+          >
+            <span class="doc-chip__path">{{ doc.path }}</span>
+            <span class="doc-chip__meta">v{{ doc.version }} · {{ doc.estimatedTokens }} tok</span>
+            @if (doc.truncated) {
+              <span class="doc-chip__trunc">truncated</span>
+            }
+          </a>
+        }
+      </div>
+    </div>
+  }
+  @case ('TOOL_CALL') {
+    <div class="log-entry log-entry--tool-call" [title]="toolDesc()">
+      <div class="tool-call__header">
+        @if (entry().meta?.ok !== undefined) {
+          <span
+            class="tool-call__status"
+            [class.is-ok]="entry().meta?.ok !== false"
+            [class.is-err]="entry().meta?.ok === false"
+          >
+            {{ entry().meta?.ok === false ? (entry().meta?.errorCode ?? 'ERROR') : 'OK' }}
+          </span>
+        }
+        <span class="tool-call__name">{{ toolLabel() }}</span>
+        @if (entry().meta?.tool; as toolName) {
+          <span class="tool-call__tool-id">{{ toolName }}</span>
+        }
+        @if (entry().meta?.durationMs !== undefined) {
+          <span class="tool-call__dur">· {{ entry().meta?.durationMs }}ms</span>
+        }
+      </div>
+
+      @if (humanRequestArgs(); as hr) {
+        <div class="tool-call__human">
+          @if (hr.title) {
+            <div class="tool-call__human-title">{{ hr.title }}</div>
+          }
+          <div class="tool-call__human-body">
+            <rd-markdown-view
+              [markdown]="hr.body"
+              (wikilinkClick)="wikilinkClick.emit($event)"
+            />
+          </div>
+          @if (hr.options && hr.options.length > 0) {
+            <div class="tool-call__human-options">
+              @for (opt of hr.options; track opt) {
+                <span class="tool-call__human-opt">{{ opt }}</span>
+              }
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="tool-call__args" [innerHTML]="highlightCode(compactArgs(), 'json')"></div>
+      }
+
+      @if (entry().meta?.ok === false && entry().meta?.resultContent; as errContent) {
+        <pre class="tool-call__error"><code [innerHTML]="highlightCode(errContent, 'json')"></code></pre>
+      }
+    </div>
+  }
+  @case ('TOOL_RESULT') {
+    <details class="log-entry log-entry--tool-result">
+      <summary class="tool-result__summary">
+        <span
+          class="tool-result__status"
+          [class.is-ok]="entry().meta?.ok !== false"
+          [class.is-err]="entry().meta?.ok === false"
+        >
+          {{ entry().meta?.ok === false ? (entry().meta?.errorCode ?? 'ERROR') : 'OK' }}
+        </span>
+        <span class="tool-result__tool">{{ entry().meta?.tool ?? 'tool result' }}</span>
+        @if (entry().meta?.durationMs !== undefined) {
+          <span class="tool-result__dur">· {{ entry().meta?.durationMs }}ms</span>
+        }
+      </summary>
+      <pre class="tool-result__body"><code [innerHTML]="highlightCode(entry().content, 'json')"></code></pre>
+    </details>
+  }
+  @case ('HANDOFF') {
+    <div
+      class="log-entry log-entry--handoff"
+      [style.--agent-color]="handoffAgent()?.color ?? 'var(--rd-primary)'"
+    >
+      <span class="handoff__pill">
+        → Delegated to {{ handoffAgent()?.name ?? entry().meta?.handoffAgentKey ?? 'Agent' }}
+      </span>
+      <span class="handoff__title">{{ entry().content }}</span>
+      @if (entry().meta?.handoffAgentKey; as targetKey) {
+        <a class="handoff__link" [routerLink]="['/s', studioSlug(), 'team', targetKey]">
+          Open console →
+        </a>
+      }
+    </div>
+  }
+  @case ('ERROR') {
+    <div class="log-entry log-entry--error" role="alert">
+      @if (entry().meta?.errorCode; as code) {
+        <strong class="error__code">{{ code }}:</strong>
+      }
+      <span>{{ entry().content }}</span>
+    </div>
+  }
+  @case ('USAGE') {
+    <div class="log-entry log-entry--usage">
+      @if (entry().meta?.usage; as u) {
+        <span>{{ u.inputTokens | number }} in · {{ u.outputTokens | number }} out</span>
+      } @else {
+        <span>{{ entry().content }}</span>
+      }
+    </div>
+  }
+}

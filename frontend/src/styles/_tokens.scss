@@ -1,0 +1,143 @@
+@use 'sass:map';
+@use 'sass:meta';
+
+// ── Colour palette ───────────────────────────────────────────────
+$colors: (
+  'bg-0': #0B0C10,            // app canvas
+  'bg-1': #12131A,            // sidebar, top bar, panels
+  'bg-2': #181A24,            // cards, raised surfaces
+  'bg-3': #1F2230,            // inputs, hover
+  'bg-4': #272B3B,            // active / pressed
+  'border': #262938,
+  'border-strong': #343850,
+  'border-focus': #7C3AED,
+  'text-1': #ECEDF3,          // primary
+  'text-2': #A9ADC1,          // secondary
+  'text-3': #6E7390,          // muted / placeholders
+  'text-inverse': #0B0C10,
+  'primary': #7C3AED,
+  'primary-hover': #6D28D9,
+  'primary-active': #5B21B6,
+  'primary-soft': rgba(124, 58, 237, 0.16),
+  'neon': #A855F7,
+  'neon-soft': rgba(168, 85, 247, 0.22),
+  'success': #22C55E,
+  'success-soft': rgba(34, 197, 94, 0.14),
+  'warning': #F59E0B,
+  'warning-soft': rgba(245, 158, 11, 0.14),
+  'danger': #EF4444,
+  'danger-soft': rgba(239, 68, 68, 0.14),
+  'info': #38BDF8,
+  'info-soft': rgba(56, 189, 248, 0.14),
+  'overlay': rgba(5, 6, 9, 0.64),
+  'glass': rgba(24, 26, 36, 0.72),
+  // Roblox UI semantic colours (vault 05 colour table) – used for previews/badges
+  'rbx-green': rgb(68, 214, 72),
+  'rbx-red': rgb(235, 82, 82),
+  'rbx-gold': rgb(255, 206, 68),
+);
+
+// ── Status semantics (agent / task / review) ─────────────────────
+// fg = text/dot colour, bg = pill fill, glow = whether the dot pulses
+$status: (
+  'WORKING':          (fg: #22C55E, bg: rgba(34, 197, 94, 0.14),  glow: true),
+  'IDLE':             (fg: #6E7390, bg: rgba(110, 115, 144, 0.14), glow: false),
+  'WAITING_ON_HUMAN': (fg: #F59E0B, bg: rgba(245, 158, 11, 0.14),  glow: false),
+  'BLOCKED':          (fg: #EF4444, bg: rgba(239, 68, 68, 0.14),   glow: false),
+  'PAUSED':           (fg: #A855F7, bg: rgba(168, 85, 247, 0.14),  glow: false),
+  'ERROR':            (fg: #EF4444, bg: rgba(239, 68, 68, 0.14),   glow: true),
+  'OFFLINE':          (fg: #4B5068, bg: transparent,               glow: false),
+  'QUEUED':           (fg: #38BDF8, bg: rgba(56, 189, 248, 0.14),  glow: false),
+  'RUNNING':          (fg: #22C55E, bg: rgba(34, 197, 94, 0.14),   glow: true),
+  'NEEDS_HUMAN':      (fg: #F59E0B, bg: rgba(245, 158, 11, 0.14),  glow: false),
+  'DONE':             (fg: #A9ADC1, bg: rgba(169, 173, 193, 0.10), glow: false),
+  'FAILED':           (fg: #EF4444, bg: rgba(239, 68, 68, 0.14),   glow: false),
+  'CANCELLED':        (fg: #6E7390, bg: rgba(110, 115, 144, 0.10), glow: false),
+  'TO_REVIEW':        (fg: #A855F7, bg: rgba(168, 85, 247, 0.16),  glow: false),
+  'CHANGES_ASKED':    (fg: #F59E0B, bg: rgba(245, 158, 11, 0.14),  glow: false),
+  'APPROVED':         (fg: #22C55E, bg: rgba(34, 197, 94, 0.14),   glow: false),
+  'REJECTED':         (fg: #EF4444, bg: rgba(239, 68, 68, 0.14),   glow: false),
+  'FIX_FIRST':        (fg: #EF4444, bg: rgba(239, 68, 68, 0.18),   glow: false),
+  'SHOULD_FIX':       (fg: #F59E0B, bg: rgba(245, 158, 11, 0.14),  glow: false),
+  'NIT':              (fg: #A9ADC1, bg: rgba(169, 173, 193, 0.10), glow: false),
+);
+
+// ── Spacing (4px base) ───────────────────────────────────────────
+$space: (0: 0, 0.5: 2px, 1: 4px, 1.5: 6px, 2: 8px, 2.5: 10px, 3: 12px, 3.5: 14px, 4: 16px, 5: 20px, 6: 24px, 8: 32px, 10: 40px, 12: 48px, 16: 64px);
+
+// ── Radii ────────────────────────────────────────────────────────
+$radii: ('xs': 4px, 'sm': 6px, 'md': 8px, 'lg': 12px, 'xl': 16px, 'pill': 999px);
+
+// ── Typography ───────────────────────────────────────────────────
+$font-ui: 'Inter Variable', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+$font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, 'SFMono-Regular', 'Cascadia Code', Consolas, 'Liberation Mono', monospace;
+$font-sizes: ('2xs': 10px, 'xs': 11px, 'sm': 12px, 'md': 13px, 'base': 14px, 'lg': 16px, 'xl': 18px, '2xl': 22px, '3xl': 28px, '4xl': 36px);
+$line-heights: ('tight': 1.2, 'snug': 1.35, 'normal': 1.5, 'relaxed': 1.65);
+$font-weights: ('regular': 400, 'medium': 500, 'semibold': 600, 'bold': 700);
+$letter-spacing: ('caps': 0.08em, 'tight': -0.01em, 'display': -0.02em);
+
+// ── Elevation ────────────────────────────────────────────────────
+$shadows: (
+  'sm': 0 1px 2px rgba(0, 0, 0, 0.4),
+  'md': 0 4px 16px rgba(0, 0, 0, 0.45),
+  'lg': 0 16px 48px rgba(0, 0, 0, 0.55),
+  'drawer': -24px 0 64px rgba(0, 0, 0, 0.55),
+  'glow-primary': (0 0 0 1px rgba(124, 58, 237, 0.5), 0 0 24px rgba(168, 85, 247, 0.35)),
+  'glow-success': 0 0 8px rgba(34, 197, 94, 0.85),
+  'inset-top': inset 0 1px 0 rgba(255, 255, 255, 0.04),
+);
+
+// ── Z-index scale ────────────────────────────────────────────────
+$z: ('base': 0, 'raised': 1, 'sticky': 10, 'sidebar': 20, 'topbar': 30, 'dropdown': 40, 'drawer-backdrop': 80, 'drawer': 90, 'dialog': 100, 'palette': 110, 'toast': 120);
+
+// ── Motion ───────────────────────────────────────────────────────
+$durations: ('instant': 80ms, 'fast': 120ms, 'base': 200ms, 'slow': 320ms, 'pulse': 1800ms);
+$easings: ('standard': cubic-bezier(0.2, 0, 0, 1), 'emphasized': cubic-bezier(0.2, 0.8, 0.2, 1), 'exit': cubic-bezier(0.4, 0, 1, 1));
+
+// ── Layout constants ─────────────────────────────────────────────
+$layout: (
+  'sidebar-w': 240px,
+  'sidebar-w-collapsed': 72px,
+  'topbar-h': 52px,
+  'drawer-w': 480px,
+  'telemetry-h': 28px,
+  'content-max': 1440px,
+  'list-pane-w': 280px,
+  'tree-pane-w': 264px,
+);
+
+// ── Breakpoints (min-width) ──────────────────────────────────────
+$breakpoints: ('sm': 640px, 'md': 900px, 'lg': 1200px, 'xl': 1536px);
+
+// ── Accessors (throw on unknown keys so typos fail the build) ─────
+@function _get($map, $key, $label) {
+  @if not map.has-key($map, $key) { @error 'Unknown #{$label} token: #{$key}'; }
+  @return map.get($map, $key);
+}
+@function color($key)    { $_: _get($colors, $key, 'color');   @return var(--rd-color-#{$key}); }
+@function raw-color($key){ @return _get($colors, $key, 'color'); }
+@function space($key)    { @return _get($space, $key, 'space'); }
+@function radius($key)   { $_: _get($radii, $key, 'radius');   @return var(--rd-radius-#{$key}); }
+@function fs($key)       { @return _get($font-sizes, $key, 'font-size'); }
+@function lh($key)       { @return _get($line-heights, $key, 'line-height'); }
+@function fw($key)       { @return _get($font-weights, $key, 'font-weight'); }
+@function shadow($key)   { $_: _get($shadows, $key, 'shadow'); @return var(--rd-shadow-#{$key}); }
+@function z($key)        { @return _get($z, $key, 'z-index'); }
+@function dur($key)      { @return _get($durations, $key, 'duration'); }
+@function ease($key)     { @return _get($easings, $key, 'easing'); }
+@function layout($key)   { $_: _get($layout, $key, 'layout');  @return var(--rd-#{$key}); }
+@function status($key, $prop) { @return map.get(_get($status, $key, 'status'), $prop); }
+
+// ── Emit CSS custom properties (called once from styles.scss) ─────
+@mixin emit-custom-properties {
+  :root {
+    color-scheme: dark;
+    @each $k, $v in $colors  { --rd-color-#{$k}: #{$v}; }
+    @each $k, $v in $radii   { --rd-radius-#{$k}: #{$v}; }
+    @each $k, $v in $shadows { --rd-shadow-#{$k}: #{meta.inspect($v)}; }
+    @each $k, $v in $layout  { --rd-#{$k}: #{$v}; }
+    --rd-font-ui: #{meta.inspect($font-ui)};
+    --rd-font-mono: #{meta.inspect($font-mono)};
+    --rd-agent-color: #{map.get($colors, 'primary')}; // overridden inline per agent
+  }
+}

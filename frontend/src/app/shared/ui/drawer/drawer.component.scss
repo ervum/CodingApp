@@ -1,0 +1,49 @@
+@use 'rd';
+
+:host {
+  position: fixed;
+  inset: 0;
+  z-index: rd.z('drawer');
+  pointer-events: none;
+}
+
+.drawer__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rd.color('overlay');
+  opacity: 0;
+  transition: opacity rd.dur('slow') rd.ease('standard');
+}
+
+.drawer__panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(#{rd.layout('drawer-w')}, 100vw);
+  background: rd.color('bg-1');
+  border-left: 1px solid rd.color('border');
+  box-shadow: rd.shadow('drawer');
+  transform: translateX(100%);
+  transition: transform rd.dur('slow') rd.ease('emphasized');
+  outline: none;
+}
+
+:host(.is-open) {
+  pointer-events: auto;
+
+  .drawer__backdrop {
+    opacity: 1;
+  }
+
+  .drawer__panel {
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drawer__panel,
+  .drawer__backdrop {
+    transition: none;
+  }
+}

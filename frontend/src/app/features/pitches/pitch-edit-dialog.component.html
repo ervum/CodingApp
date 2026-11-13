@@ -1,0 +1,79 @@
+<rd-dialog [(open)]="open" title="Edit & approve pitch" width="680px">
+  <form class="edit-form" (ngSubmit)="submit()">
+    <label class="rd-field">
+      <span class="rd-field__label">Game title</span>
+      <input
+        type="text"
+        class="rd-input"
+        name="title"
+        required
+        minlength="3"
+        maxlength="80"
+        [ngModel]="title()"
+        (ngModelChange)="title.set($event)"
+      />
+    </label>
+
+    <label class="rd-field">
+      <span class="rd-field__label">Logline</span>
+      <textarea
+        class="rd-textarea"
+        name="logline"
+        rows="2"
+        required
+        minlength="20"
+        maxlength="400"
+        [ngModel]="logline()"
+        (ngModelChange)="logline.set($event)"
+      ></textarea>
+    </label>
+
+    <div class="edit-form__row">
+      <label class="rd-field">
+        <span class="rd-field__label">What changed</span>
+        <textarea
+          class="rd-textarea"
+          name="whatChanged"
+          rows="3"
+          required
+          [ngModel]="whatChanged()"
+          (ngModelChange)="whatChanged.set($event)"
+        ></textarea>
+      </label>
+
+      <label class="rd-field">
+        <span class="rd-field__label">How we're different</span>
+        <textarea
+          class="rd-textarea"
+          name="howDifferent"
+          rows="3"
+          required
+          [ngModel]="howDifferent()"
+          (ngModelChange)="howDifferent.set($event)"
+        ></textarea>
+      </label>
+    </div>
+
+    @for (key of sectionKeys; track key) {
+      <label class="rd-field">
+        <span class="rd-field__label">{{ sectionTitles[key] }}</span>
+        <textarea
+          class="rd-textarea edit-form__mono"
+          [name]="key"
+          rows="4"
+          [ngModel]="sectionMap()[key]"
+          (ngModelChange)="updateSection(key, $event)"
+        ></textarea>
+      </label>
+    }
+
+    <div class="edit-form__actions">
+      <button type="button" class="rd-btn rd-btn--ghost" (click)="open.set(false)">
+        Cancel
+      </button>
+      <button type="submit" class="rd-btn rd-btn--primary">
+        Save &amp; Pick this game
+      </button>
+    </div>
+  </form>
+</rd-dialog>

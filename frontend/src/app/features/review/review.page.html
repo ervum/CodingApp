@@ -1,0 +1,316 @@
+<div class="review">
+  <header class="review__header">
+    <span class="review__eyebrow">NOTHING WAITING ON YOU</span>
+    <h1 class="review__title">Review</h1>
+    <p class="review__subtitle">
+      Everything the agents made for you to look at. Approve it, ask for changes, or reject it; the agent picks up your verdict on its next pass.
+    </p>
+  </header>
+
+  <nav class="review__subtabs" aria-label="Review tabs">
+    <button
+      type="button"
+      class="review__subtab"
+      [class.is-active]="activeTab() === 'IMAGES_VIDEO'"
+      (click)="activeTab.set('IMAGES_VIDEO')"
+    >
+      <span>Images &amp; video</span>
+      <span class="review__subtab-count">4</span>
+    </button>
+
+    <button
+      type="button"
+      class="review__subtab"
+      [class.is-active]="activeTab() === 'STAGES_PUBLISH'"
+      (click)="activeTab.set('STAGES_PUBLISH')"
+    >
+      <span>Stages &amp; publish</span>
+      <span class="review__subtab-count">2</span>
+    </button>
+  </nav>
+
+  @if (activeTab() === 'IMAGES_VIDEO') {
+    <div class="review__filter-bar">
+      <div class="review__pills">
+        @for (f of statusFilters(); track f.id) {
+          <button
+            type="button"
+            class="review__pill"
+            [class.is-active]="activeStatus() === f.id"
+            (click)="activeStatus.set(f.id)"
+          >
+            <span>{{ f.label }}</span>
+            <span class="review__pill-count">{{ f.count }}</span>
+          </button>
+        }
+      </div>
+
+      <div class="review__right-controls">
+        <select
+          class="review__select"
+          [ngModel]="selectedAgent()"
+          (ngModelChange)="selectedAgent.set($event)"
+          aria-label="Filter by agent"
+        >
+          <option value="ALL">Every agent</option>
+          @for (a of roster; track a.key) {
+            <option [value]="a.key">{{ a.name }}</option>
+          }
+        </select>
+
+        <label class="review__checkbox">
+          <input
+            type="checkbox"
+            [ngModel]="showOlderVersions()"
+            (ngModelChange)="showOlderVersions.set($event)"
+          />
+          <span>Older versions</span>
+        </label>
+
+        <button type="button" class="review__clear-btn" (click)="uploadModalOpen.set(true)">
+          Upload for review
+        </button>
+
+        <button type="button" class="review__clear-btn" (click)="clearQueue()">
+          Clear the queue
+        </button>
+      </div>
+    </div>
+
+    @if (reviewStore.visibleItems().length > 0) {
+      <section class="review-group">
+        <header class="review-group__header">
+          <div class="review-group__left">
+            <h2 class="review-group__title">Live Review Queue</h2>
+            <span class="review-group__meta">{{ reviewStore.visibleItems().length }} items</span>
+          </div>
+        </header>
+        <div class="review-group__body review-group__body--grid">
+          @for (rv of reviewStore.visibleItems(); track rv.id) {
+            <article class="media-card" (click)="reviewStore.open(rv.id)">
+              <div class="media-card__viewport media-card__viewport--square">
+                <span class="media-card__approved">{{ rv.status }} · v{{ rv.iteration }}</span>
+                <div class="icon-mock">
+                  <span class="icon-mock__label">{{ rv.kind }}</span>
+                </div>
+              </div>
+              <div class="media-card__footer">
+                <div class="media-card__caption">{{ rv.title }}</div>
+                <div class="media-card__meta">{{ rv.kind }} · v{{ rv.iteration }}</div>
+              </div>
+            </article>
+          }
+        </div>
+      </section>
+    }
+
+    <!-- Group 1: Frame screenshots -->
+    <section class="review-group">
+      <header class="review-group__header" (click)="frameGroupOpen.set(!frameGroupOpen())">
+        <div class="review-group__left">
+          <span class="review-group__chevron" [class.is-open]="frameGroupOpen()">▾</span>
+          <h2 class="review-group__title">Frame screenshots</h2>
+          <span class="review-group__meta">1 to review</span>
+        </div>
+        <button
+          type="button"
+          class="review-group__approve-btn"
+          (click)="approveAllFrame($event)"
+        >
+          Approve all
+        </button>
+      </header>
+
+      @if (frameGroupOpen()) {
+        <div class="review-group__body review-group__body--single">
+          <article class="media-card media-card--wide">
+            <div class="media-card__viewport media-card__viewport--shop">
+              <span class="media-card__approved">✓ Approved</span>
+              <div class="shop-mock">
+                <div class="shop-mock__title">SHOP — DARKENED AWAKENING</div>
+                <div class="shop-mock__hero">FEATURED AWAKENING BUNDLE · 399 R$</div>
+                <div class="shop-mock__cards">
+                  <div class="shop-mock__card">STARTER PACK · 99 R$</div>
+                  <div class="shop-mock__card">MYTHIC ROLL ×10 · 399 R$</div>
+                  <div class="shop-mock__card">AURA VAULT PASS · 799 R$</div>
+                </div>
+              </div>
+            </div>
+            <div class="media-card__footer">
+              <div class="media-card__caption">Use this shop layout: hero, 3-card...</div>
+              <div class="media-card__meta">Screenshot · Game One</div>
+            </div>
+          </article>
+        </div>
+      }
+    </section>
+
+    <!-- Group 2: Splash icons -->
+    <section class="review-group">
+      <header class="review-group__header" (click)="splashGroupOpen.set(!splashGroupOpen())">
+        <div class="review-group__left">
+          <span class="review-group__chevron" [class.is-open]="splashGroupOpen()">▾</span>
+          <h2 class="review-group__title">Splash icons</h2>
+          <span class="review-group__meta">3 to review</span>
+        </div>
+        <button
+          type="button"
+          class="review-group__approve-btn"
+          (click)="approveAllSplash($event)"
+        >
+          Approve all
+        </button>
+      </header>
+
+      @if (splashGroupOpen()) {
+        <div class="review-group__body review-group__body--grid">
+          @for (icon of splashIcons(); track icon.id) {
+            <article class="media-card">
+              <div
+                class="media-card__viewport media-card__viewport--square"
+                [style.background]="icon.gradient"
+              >
+                <span class="media-card__approved">✓ Approved</span>
+                <div class="icon-mock">
+                  <span class="icon-mock__label">ROBLOX ICON 512x512</span>
+                </div>
+              </div>
+              <div class="media-card__footer">
+                <div class="media-card__caption">{{ icon.title }}</div>
+                <div class="media-card__meta">{{ icon.subtitle }}</div>
+              </div>
+            </article>
+          }
+        </div>
+      }
+    </section>
+  } @else {
+    <!-- Tab 2: Stages & publish -->
+    <div class="stages-tab">
+      <div class="stages-tab__status">
+        <span class="stages-tab__dot"></span>
+        <span>Reviewing in existing Studio · {{ activeGameLabel() }} · "{{ store.studio()?.name ?? 'OVERDRIVE V4 - THE AI STUDIO' }}"</span>
+      </div>
+
+      <!-- Crimson Human-Only Safety Boundary Box -->
+      <section class="crimson-gate" aria-label="Irreversible human-only safety boundary">
+        <header class="crimson-gate__header">
+          <span class="crimson-gate__lock">🔒</span>
+          <span class="crimson-gate__eyebrow">
+            IRREVERSIBLE — human only · stage == "shipped" OR review_status == "approved"
+          </span>
+        </header>
+        <p class="crimson-gate__subtitle">
+          Publishing to Roblox and promoting a stage to shipped are permanent. Only you can do them — agents never call the publish endpoint.
+        </p>
+
+        <div class="crimson-gate__grid">
+          <article class="crimson-gate__card">
+            <div class="crimson-gate__card-top">
+              <h3 class="crimson-gate__card-title">Stage sign-off</h3>
+              <span class="crimson-gate__badge">
+                NO AGENT / ENDPOINT CALL. NO AUTOMATION HITS THIS.
+              </span>
+            </div>
+            <p class="crimson-gate__card-desc">
+              Promote Game One from Built (v12) to Shipped once all 108-second playtest and economy checks are verified.
+            </p>
+          </article>
+
+          <article class="crimson-gate__card">
+            <div class="crimson-gate__card-top">
+              <h3 class="crimson-gate__card-title">Publish to Roblox</h3>
+              <span class="crimson-gate__badge">
+                NO AGENT / ENDPOINT CALL. NO AUTOMATION HITS THIS.
+              </span>
+            </div>
+            <p class="crimson-gate__card-desc">
+              Push saved Studio file v12 live to Universe 8841204910. Requires manual operator confirmation in Studio.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <div class="stages-tab__divider">
+        <span>BELOW THIS LINE, NOTHING IS IRREVERSIBLE</span>
+      </div>
+
+      <div class="stages-tab__reversible-grid">
+        <article class="reversible-card">
+          <h3 class="reversible-card__title">Review verdicts — reversible</h3>
+          <p class="reversible-card__desc">
+            Approving or requesting changes on screenshots, icons, or stage readiness packets can be flipped at any time. Agents simply read the latest verdict on their next pass.
+          </p>
+        </article>
+
+        <article class="reversible-card">
+          <h3 class="reversible-card__title">Picked task — context, not your queue</h3>
+          <p class="reversible-card__desc">
+            Selecting a task or build artifact in Review scopes the inspector to that game's stage.json without triggering any automated deployment.
+          </p>
+        </article>
+      </div>
+    </div>
+  }
+
+  @if (reviewStore.detail(); as detail) {
+    <div class="review__drawer-backdrop" (click)="reviewStore.close()">
+      <aside class="review__drawer-panel" (click)="$event.stopPropagation()">
+        <rd-review-drawer
+          [detail]="detail"
+          [canAct]="store.canEdit()"
+          [busy]="reviewStore.busy()"
+          (verdict)="onDrawerVerdict($event)"
+          (navigate)="onDrawerNavigate($event)"
+          (close)="reviewStore.close()"
+          (resolveBlocker)="reviewStore.resolveBlocker($event.id, $event.status)"
+        />
+      </aside>
+    </div>
+  }
+
+  @if (uploadModalOpen()) {
+    <div class="review__drawer-backdrop" (click)="uploadModalOpen.set(false)">
+      <div class="review__upload-modal" (click)="$event.stopPropagation()">
+        <h3>Upload Asset for Review</h3>
+        <input
+          type="text"
+          class="review__select"
+          placeholder="Review item title..."
+          [ngModel]="uploadTitle()"
+          (ngModelChange)="uploadTitle.set($event)"
+        />
+        <select
+          class="review__select"
+          [ngModel]="uploadKind()"
+          (ngModelChange)="uploadKind.set($event)"
+        >
+          <option value="ICON">ICON (1:1)</option>
+          <option value="THUMBNAIL">THUMBNAIL (16:9)</option>
+          <option value="TRAILER">TRAILER (Video)</option>
+        </select>
+        <input
+          type="text"
+          class="review__select"
+          placeholder="Description / context (optional)..."
+          [ngModel]="uploadDescription()"
+          (ngModelChange)="uploadDescription.set($event)"
+        />
+        <input type="file" (change)="onFileSelected($event)" />
+        <div class="review__right-controls">
+          <button type="button" class="review__clear-btn" (click)="uploadModalOpen.set(false)">
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="review-group__approve-btn"
+            [disabled]="!uploadFile() || !uploadTitle().trim()"
+            (click)="submitUpload()"
+          >
+            Upload
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

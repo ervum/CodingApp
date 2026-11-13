@@ -1,0 +1,15 @@
+<div class="toast-host" aria-live="polite" aria-atomic="false">
+  @for (t of toastService.toasts(); track t.id) {
+    <div class="toast" [attr.data-tone]="t.tone">
+      <span class="toast__msg">{{ t.message }}</span>
+      <button
+        type="button"
+        class="toast__close"
+        aria-label="Dismiss notification"
+        (click)="toastService.dismiss(t.id)"
+      >
+        <rd-icon name="x" [size]="14" />
+      </button>
+    </div>
+  }
+</div>

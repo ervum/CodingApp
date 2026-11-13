@@ -1,0 +1,27 @@
+<section class="needs-col" aria-label="Needs you">
+  <header class="needs-col__header">
+    <h2 class="needs-col__title">Needs you</h2>
+    <rd-count-badge [count]="4" tone="warning" />
+  </header>
+
+  @if (store.filteredRequests().length === 0) {
+    <rd-empty-state
+      icon="check"
+      title="Nothing needs you right now."
+      description="Agents will surface playtest verifications, pitch picks, and decisions here."
+    />
+  } @else {
+    <div class="needs-col__list">
+      @for (req of store.filteredRequests(); track req.id) {
+        <rd-needs-you-card
+          [request]="req"
+          [game]="gameFor(req)"
+          [pitches]="pitches()"
+          (reply)="onReply($event)"
+          (done)="onDone($event)"
+          (details)="onDetails($event)"
+        />
+      }
+    </div>
+  }
+</section>

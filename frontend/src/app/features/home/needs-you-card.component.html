@@ -1,0 +1,85 @@
+<article class="needs-card" [style.--agent-accent]="agentInfo().color">
+  <div class="needs-card__top">
+    <rd-agent-avatar [agentKey]="agentKey()" size="sm" />
+    <span class="needs-card__header">{{ headerText() }}</span>
+  </div>
+
+  <h3 class="needs-card__title">{{ request().title }}</h3>
+
+  <p class="needs-card__body">{{ request().body }}</p>
+
+  @if (replyOpen()) {
+    <div class="needs-card__reply-box">
+      <textarea
+        class="needs-card__textarea"
+        rows="2"
+        placeholder="Tell {{ agentInfo().name }} what to change..."
+        [ngModel]="replyText()"
+        (ngModelChange)="replyText.set($event)"
+        (keydown)="onReplyKeydown($event)"
+      ></textarea>
+      <div class="needs-card__reply-actions">
+        <button
+          type="button"
+          class="needs-card__btn needs-card__btn--good"
+          [disabled]="!replyText().trim()"
+          (click)="submitReply()"
+        >
+          <rd-icon name="send" [size]="12" />
+          <span>Send feedback</span>
+        </button>
+        <button
+          type="button"
+          class="needs-card__btn needs-card__btn--inline"
+          (click)="replyOpen.set(false)"
+        >
+          <span>Cancel</span>
+        </button>
+      </div>
+    </div>
+  }
+
+  <div class="needs-card__actions">
+    @if (request().options.length > 0) {
+      @for (opt of request().options; track opt.id) {
+        <button
+          type="button"
+          class="needs-card__btn"
+          [class.needs-card__btn--good]="opt.id !== 'deny'"
+          [class.needs-card__btn--dark]="opt.id === 'deny'"
+          (click)="chooseOption(opt.id, opt.label)"
+        >
+          @if (opt.id === 'approve') {
+            <rd-icon name="check" [size]="13" />
+          }
+          <span>{{ opt.label }}</span>
+        </button>
+      }
+    } @else {
+      <button
+        type="button"
+        class="needs-card__btn needs-card__btn--good"
+        (click)="done.emit(request().id)"
+      >
+        <rd-icon name="check" [size]="13" />
+        <span>Looks good</span>
+      </button>
+    }
+
+    <button
+      type="button"
+      class="needs-card__btn needs-card__btn--dark"
+      (click)="details.emit(request())"
+    >
+      <span>See details</span>
+    </button>
+
+    <button
+      type="button"
+      class="needs-card__btn needs-card__btn--inline"
+      (click)="toggleReply()"
+    >
+      <span>Custom reply</span>
+    </button>
+  </div>
+</article>

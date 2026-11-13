@@ -1,0 +1,15 @@
+@use 'tokens' as t;
+@keyframes rd-pulse-glow { 0%, 100% { opacity: 1; filter: brightness(1); } 50% { opacity: 0.55; filter: brightness(1.4); } }
+@keyframes rd-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes rd-slide-in-right { from { transform: translateX(100%); } to { transform: translateX(0); } }
+@keyframes rd-slide-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes rd-scale-in { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: scale(1); } }
+@keyframes rd-caret-blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+@keyframes rd-shimmer { from { background-position: -400px 0; } to { background-position: 400px 0; } }
+@keyframes rd-spin { to { transform: rotate(360deg); } }
+.rd-anim-slide-up { animation: rd-slide-up t.dur('base') t.ease('emphasized') both; }
+.rd-skeleton {
+  background: linear-gradient(90deg, t.raw-color('bg-2') 0, t.raw-color('bg-3') 40px, t.raw-color('bg-2') 80px);
+  background-size: 800px 100%; animation: rd-shimmer 1.4s linear infinite; border-radius: t.radius('sm');
+}
+.rd-streaming-caret::after { content: '▍'; margin-left: 2px; color: t.color('neon'); animation: rd-caret-blink 1s steps(1) infinite; }

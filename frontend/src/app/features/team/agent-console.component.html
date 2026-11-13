@@ -1,0 +1,877 @@
+<div class="console" [class.console--wide]="wide()">
+  <header class="console__header">
+    <div class="console__identity">
+      <rd-agent-avatar [agentKey]="agentSummary().key" size="md" />
+      <div class="console__titles">
+        <div class="console__name-row">
+          <h2 class="console__name">{{ agentSummary().name }}</h2>
+        </div>
+        <p class="console__role">
+          <span
+            class="console__idle-dot"
+            [class.is-working]="agentSummary().status === 'WORKING' || consoleStore.pendingStatusText() !== null"
+          ></span>
+          <span>
+            @if (agentSummary().status === 'WORKING' || consoleStore.pendingStatusText()) {
+              {{ consoleStore.pendingStatusText() || 'Working' }}
+            } @else if (agentSummary().status === 'OFFLINE') {
+              Offline (no model bound)
+            } @else if (agentSummary().status === 'ERROR') {
+              Error
+            } @else {
+              Idle
+            }
+            · {{ agentSummary().title }}
+          </span>
+        </p>
+      </div>
+    </div>
+
+    <div class="console__header-actions">
+      <button
+        type="button"
+        class="console__fresh-btn"
+        [disabled]="!store.canEdit() || consoleStore.chatTurns().length === 0"
+        title="Start fresh: archive all active messages into Archive #N at the top of the chat"
+        (click)="onFreshStart()"
+      >
+        <rd-icon name="archive" [size]="13" />
+        <span>Start fresh</span>
+      </button>
+
+      <button
+        type="button"
+        class="console__artifacts-btn"
+        [class.is-active]="artifactsDrawerOpen()"
+        [attr.aria-expanded]="artifactsDrawerOpen()"
+        (click)="toggleArtifactsDrawer()"
+      >
+        <span>Artifacts</span>
+        <span class="console__artifacts-count">{{ consoleStore.totalChatArtifactsCount() }}</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="console__body">
+    @if (consoleStore.chatTurns().length === 0 && consoleStore.archives().length === 0) {
+      <div class="console__lead-empty">
+        <p>No messages yet. Describe a task below to start working with {{ agentSummary().name }}.</p>
+      </div>
+    } @else {
+      <div class="console__stream">
+        @if (consoleStore.archives().length > 0) {
+          <section class="console__archives" aria-label="Archived chat history">
+            <div class="console__archives-head">
+              <div class="console__archives-title">
+                <rd-icon name="archive" [size]="13" />
+                <span>Archived Chats ({{ consoleStore.archives().length }})</span>
+              </div>
+              <button
+                type="button"
+                class="console__archives-clear-btn"
+                [disabled]="!store.canEdit()"
+                title="Delete all archives in this chat"
+                (click)="onDeleteAllArchives($event)"
+              >
+                <rd-icon name="trash" [size]="11" />
+                <span>Delete all archives</span>
+              </button>
+            </div>
+
+            <div class="console__archives-list">
+              @for (arch of consoleStore.archives(); track arch.id) {
+                <div
+                  class="archive-card"
+                  [class.archive-card--branch]="arch.kind === 'BRANCH'"
+                  [class.is-expanded]="isArchiveExpanded(arch.id)"
+                >
+                  <div class="archive-card__bar">
+                    <button
+                      type="button"
+                      class="archive-card__toggle"
+                      [attr.aria-expanded]="isArchiveExpanded(arch.id)"
+                      (click)="onToggleArchive(arch.id, $event)"
+                    >
+                      <rd-icon
+                        [name]="isArchiveExpanded(arch.id) ? 'chevron-down' : 'chevron-right'"
+                        [size]="13"
+                      />
+                      <span class="archive-card__badge">{{ arch.label }}</span>
+                      <span class="archive-card__counts">
+                        {{ arch.turnCount }} turn{{ arch.turnCount === 1 ? '' : 's' }}
+                      </span>
+                      @if (arch.firstPromptExcerpt || arch.previewSnippet) {
+                        <span class="archive-card__snippet">
+                          "{{ arch.firstPromptExcerpt || arch.previewSnippet }}"
+                        </span>
+                      }
+                      <span class="archive-card__time">{{ arch.createdAt | relativeTime }}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      class="archive-card__delete-btn"
+                      [disabled]="!store.canEdit()"
+                      [title]="'Delete ' + arch.label"
+                      [attr.aria-label]="'Delete ' + arch.label"
+                      (click)="onDeleteArchive(arch.id, $event)"
+                    >
+                      <rd-icon name="trash" [size]="12" />
+                      <span>Delete</span>
+                    </button>
+                  </div>
+
+                  @if (isArchiveExpanded(arch.id)) {
+                    <div class="archive-card__body">
+                      @if (isArchiveLoading(arch.id)) {
+                        <div class="archive-card__loading">Loading archived messages...</div>
+                      } @else if (archiveTurns(arch.id).length === 0) {
+                        <div class="archive-card__loading">No turns stored in this archive.</div>
+                      } @else {
+                        @for (archTurn of archiveTurns(arch.id); track archTurn.id) {
+                          @if (archTurn.userMessage; as archMsg) {
+                            <div class="chat-row chat-row--user">
+                              <article class="chat-bubble chat-bubble--user chat-bubble--archived">
+                                <header class="chat-bubble__head">
+                                  <span class="chat-bubble__author">
+                                    {{ archMsg.userDisplayName || userDisplayName() }}
+                                  </span>
+                                  <div class="chat-bubble__meta-right">
+                                    <span class="chat-bubble__time">
+                                      {{ archMsg.createdAt | relativeTime }}
+                                    </span>
+                                  </div>
+                                </header>
+                                <div class="chat-bubble__text">
+                                  <rd-markdown-view
+                                    [markdown]="archMsg.body"
+                                    (wikilinkClick)="onWikilink($event)"
+                                  />
+                                </div>
+                                <footer class="chat-bubble__actions">
+                                  <rd-copy-split-button
+                                    [markdown]="archMsg.body"
+                                    ariaLabel="Copy archived user message"
+                                  />
+                                </footer>
+                              </article>
+                            </div>
+                          }
+
+                          @if (archTurn.entries.length > 0 || archTurn.artifacts.length > 0) {
+                            <div class="chat-row chat-row--agent">
+                              <rd-agent-avatar
+                                class="chat-row__avatar"
+                                [agentKey]="agentSummary().key"
+                                size="sm"
+                              />
+                              <article class="chat-bubble chat-bubble--agent chat-bubble--archived">
+                                <header class="chat-bubble__head">
+                                  <div class="chat-bubble__author-group">
+                                    <span class="chat-bubble__author">{{ agentSummary().name }}</span>
+                                    <span class="chat-bubble__author-sep">-</span>
+                                    <span class="chat-bubble__model-btn">
+                                      {{ archTurn.modelInfo.shortModelName }}
+                                    </span>
+                                  </div>
+                                  <div class="chat-bubble__meta-right">
+                                    <span class="chat-bubble__time">
+                                      {{ archTurn.aiTimestamp | relativeTime }}
+                                    </span>
+                                  </div>
+                                </header>
+                                <div class="chat-bubble__entries">
+                                  @for (entry of archTurn.entries; track entry.id) {
+                                    <rd-log-entry
+                                      [entry]="entry"
+                                      [streaming]="false"
+                                      [collapseThinkingByDefault]="true"
+                                      (wikilinkClick)="onWikilink($event)"
+                                    />
+                                  }
+                                </div>
+                                <footer class="chat-bubble__actions">
+                                  <rd-copy-split-button
+                                    [markdown]="archTurn.rawAssistantMarkdown"
+                                    ariaLabel="Copy archived AI response"
+                                  />
+                                </footer>
+                              </article>
+                            </div>
+                          }
+                        }
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </section>
+        }
+
+        @if (consoleStore.chatTurns().length === 0) {
+          <div class="console__fresh-empty">
+            Fresh chat started. Send a message below to begin a new thread with {{ agentSummary().name }}.
+          </div>
+        }
+
+        @for (turn of consoleStore.chatTurns(); track turn.id) {
+          @if (turn.userMessage; as msg) {
+            <div class="chat-row chat-row--user">
+              <article class="chat-bubble chat-bubble--user">
+                <header class="chat-bubble__head">
+                  <span class="chat-bubble__author">{{ msg.userDisplayName || userDisplayName() }}</span>
+                  <div class="chat-bubble__meta-right">
+                    <div class="chat-bubble__tokens-wrap">
+                      <button
+                        type="button"
+                        class="chat-bubble__tokens-btn"
+                        [class.is-open]="openTokenPopoverKey() === 'user:' + turn.id"
+                        [attr.aria-expanded]="openTokenPopoverKey() === 'user:' + turn.id"
+                        (click)="toggleTokenPopover('user:' + turn.id, $event)"
+                      >
+                        {{ turn.userTokens.total | number }} Tokens
+                      </button>
+
+                      @if (openTokenPopoverKey() === 'user:' + turn.id) {
+                        <div
+                          class="chat-bubble__tokens-popover chat-bubble__tokens-popover--right"
+                          role="dialog"
+                          aria-label="Prompt token breakdown"
+                        >
+                          <div class="tokens-popover__title">
+                            <span>Prompt Tokens</span>
+                            <span class="tokens-popover__total">{{ turn.userTokens.total | number }} total</span>
+                          </div>
+                          <dl class="tokens-popover__grid">
+                            <div class="tokens-popover__row">
+                              <dt>User Prompt</dt>
+                              <dd>{{ turn.userTokens.userPrompt | number }} tokens</dd>
+                            </div>
+                            <div class="tokens-popover__row">
+                              <dt>Vault Context</dt>
+                              <dd>{{ turn.userTokens.vaultContext | number }} tokens</dd>
+                            </div>
+                            <div class="tokens-popover__row">
+                              <dt>System &amp; Persona Rules</dt>
+                              <dd>{{ turn.userTokens.systemRules | number }} tokens</dd>
+                            </div>
+                            <div class="tokens-popover__row">
+                              <dt>Tools &amp; Session Context</dt>
+                              <dd>{{ turn.userTokens.toolsAndContext | number }} tokens</dd>
+                            </div>
+                          </dl>
+                        </div>
+                      }
+                    </div>
+                    <span class="chat-bubble__meta-dot">•</span>
+                    <span class="chat-bubble__time">{{ msg.createdAt | relativeTime }}</span>
+                  </div>
+                </header>
+
+                @if ((msg.directives && msg.directives.length > 0) || (msg.attachments && msg.attachments.length > 0)) {
+                  <div class="chat-bubble__attachments">
+                    @for (dir of msg.directives ?? []; track dir) {
+                      <span class="chat-bubble__badge chat-bubble__badge--directive">
+                        {{ directiveMetadata[dir].command || dir }}
+                      </span>
+                    }
+                    @for (att of msg.attachments ?? []; track $index) {
+                      <span class="chat-bubble__badge chat-bubble__badge--attachment">
+                        {{ attachmentBadgeLabel(att) }}
+                      </span>
+                    }
+                  </div>
+                }
+
+                <div class="chat-bubble__text">
+                  <rd-markdown-view
+                    [markdown]="msg.body"
+                    (wikilinkClick)="onWikilink($event)"
+                  />
+                </div>
+
+                <footer class="chat-bubble__actions" aria-label="User message actions">
+                  <button
+                    type="button"
+                    class="chat-action-btn chat-action-btn--danger"
+                    [disabled]="!store.canEdit()"
+                    title="Delete this message"
+                    (click)="onDeleteTurnPart(turn, 'USER', $event)"
+                  >
+                    <rd-icon name="trash" [size]="11" />
+                    <span>Delete</span>
+                  </button>
+
+                  <rd-copy-split-button
+                    [markdown]="msg.body"
+                    ariaLabel="Copy user message"
+                  />
+
+                  <button
+                    type="button"
+                    class="chat-action-btn"
+                    [disabled]="!store.canEdit()"
+                    title="Undo / branch from here: moves this message and all newer ones into a Branch Archive #N"
+                    (click)="onBranchFrom(turn, 'USER', $event)"
+                  >
+                    <rd-icon name="undo" [size]="11" />
+                    <span>Undo / branch</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    class="chat-action-btn"
+                    [disabled]="!store.canEdit()"
+                    title="Retry with current chat agent configuration (archives old response into Branch Archive #N)"
+                    (click)="onRetryTurn(turn, 'CURRENT', $event)"
+                  >
+                    <rd-icon name="rotate-ccw" [size]="11" />
+                    <span>Retry</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    class="chat-action-btn"
+                    [disabled]="!store.canEdit()"
+                    [title]="'Retry with same agent configuration originally used (' + turn.modelInfo.shortModelName + ')'"
+                    (click)="onRetryTurn(turn, 'SAME_AGENT', $event)"
+                  >
+                    <rd-icon name="refresh" [size]="11" />
+                    <span>Retry same agent</span>
+                  </button>
+                </footer>
+              </article>
+            </div>
+          }
+
+          @if (turn.entries.length > 0 || turn.artifacts.length > 0 || turn.statusText) {
+            <div class="chat-row chat-row--agent">
+              <rd-agent-avatar class="chat-row__avatar" [agentKey]="agentSummary().key" size="sm" />
+              <article class="chat-bubble chat-bubble--agent">
+                <header class="chat-bubble__head">
+                  <div class="chat-bubble__author-group">
+                    <span class="chat-bubble__author">{{ agentSummary().name }}</span>
+                    <span class="chat-bubble__author-sep">-</span>
+                    <div class="chat-bubble__model-wrap">
+                      <button
+                        type="button"
+                        class="chat-bubble__model-btn"
+                        [class.is-open]="openModelPopoverTurnId() === turn.id"
+                        [attr.aria-expanded]="openModelPopoverTurnId() === turn.id"
+                        (click)="toggleTurnModelPopover(turn.id, $event)"
+                      >
+                        {{ turn.modelInfo.shortModelName }}
+                      </button>
+
+                      @if (openModelPopoverTurnId() === turn.id) {
+                        <div class="chat-bubble__model-popover" role="dialog" aria-label="Model run configuration">
+                          <div class="model-popover__title">
+                            <span>{{ turn.modelInfo.shortModelName }}</span>
+                            <span class="model-popover__badge">{{ turn.modelInfo.providerLabel }}</span>
+                          </div>
+                          <dl class="model-popover__grid">
+                            <div class="model-popover__row">
+                              <dt>Provider</dt>
+                              <dd>{{ turn.modelInfo.providerLabel }}</dd>
+                            </div>
+                            <div class="model-popover__row">
+                              <dt>Thinking Level</dt>
+                              <dd>{{ turn.modelInfo.thinkingLevel }}</dd>
+                            </div>
+                            <div class="model-popover__row">
+                              <dt>Output Length</dt>
+                              <dd>{{ turn.modelInfo.outputLength | number }} tokens</dd>
+                            </div>
+                            <div class="model-popover__row">
+                              <dt>Temperature</dt>
+                              <dd>{{ turn.modelInfo.temperature }}</dd>
+                            </div>
+                            @if (turn.modelInfo.mediaResolution) {
+                              <div class="model-popover__row">
+                                <dt>Media Resolution</dt>
+                                <dd>{{ turn.modelInfo.mediaResolution }}</dd>
+                              </div>
+                            }
+                            @if (turn.modelInfo.tools.length > 0) {
+                              <div class="model-popover__row">
+                                <dt>Tools</dt>
+                                <dd>{{ turn.modelInfo.tools.join(', ') }}</dd>
+                              </div>
+                            }
+                            @if (turn.modelInfo.chatSessionMode) {
+                              <div class="model-popover__row">
+                                <dt>Chat Session</dt>
+                                <dd>{{ turn.modelInfo.chatSessionMode }}</dd>
+                              </div>
+                            }
+                          </dl>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                  <div class="chat-bubble__meta-right">
+                    <div class="chat-bubble__tokens-wrap">
+                      <button
+                        type="button"
+                        class="chat-bubble__tokens-btn"
+                        [class.is-open]="openTokenPopoverKey() === 'ai:' + turn.id"
+                        [attr.aria-expanded]="openTokenPopoverKey() === 'ai:' + turn.id"
+                        (click)="toggleTokenPopover('ai:' + turn.id, $event)"
+                      >
+                        {{ turn.aiTokens.total | number }} Tokens
+                      </button>
+
+                      @if (openTokenPopoverKey() === 'ai:' + turn.id) {
+                        <div
+                          class="chat-bubble__tokens-popover chat-bubble__tokens-popover--right"
+                          role="dialog"
+                          aria-label="Response token breakdown"
+                        >
+                          <div class="tokens-popover__title">
+                            <span>Response Tokens</span>
+                            <span class="tokens-popover__total">{{ turn.aiTokens.total | number }} total</span>
+                          </div>
+                          <dl class="tokens-popover__grid">
+                            <div class="tokens-popover__row">
+                              <dt>Thoughts</dt>
+                              <dd>{{ turn.aiTokens.thoughts | number }} tokens</dd>
+                            </div>
+                            <div class="tokens-popover__row">
+                              <dt>Artifacts</dt>
+                              <dd>{{ turn.aiTokens.artifacts | number }} tokens</dd>
+                            </div>
+                            <div class="tokens-popover__row">
+                              <dt>Response</dt>
+                              <dd>{{ turn.aiTokens.response | number }} tokens</dd>
+                            </div>
+                            @if (turn.aiTokens.toolCalls > 0) {
+                              <div class="tokens-popover__row">
+                                <dt>Tool Calls</dt>
+                                <dd>{{ turn.aiTokens.toolCalls | number }} tokens</dd>
+                              </div>
+                            }
+                          </dl>
+                        </div>
+                      }
+                    </div>
+                    <span class="chat-bubble__meta-dot">•</span>
+                    <span class="chat-bubble__time">
+                      {{ turn.isStreaming ? 'now' : (turn.aiTimestamp | relativeTime) }}
+                    </span>
+                  </div>
+                </header>
+
+                <div class="chat-bubble__entries">
+                  @for (entry of turn.entries; track entry.id) {
+                    <rd-log-entry
+                      [entry]="entry"
+                      [streaming]="consoleStore.streamingEntryId() === entry.id"
+                      [collapseThinkingByDefault]="turn.hasTextResponse"
+                      (wikilinkClick)="onWikilink($event)"
+                    />
+                  }
+
+                  @if (turn.statusText && turn.entries.length === 0) {
+                    <div class="chat-bubble__status">{{ turn.statusText }}</div>
+                  }
+
+                  @if (turn.artifacts.length > 0) {
+                    <div class="chat-bubble__artifacts" aria-label="Saved run artifacts">
+                      @for (art of turn.artifacts; track art.id) {
+                        <details class="chat-artifact" open>
+                          <summary class="chat-artifact__header">
+                            <span class="chat-artifact__badge">ARTIFACT</span>
+                            <a
+                              href="#"
+                              class="rd-filepath-link chat-artifact__path"
+                              [title]="'Click to choose which app opens ' + art.path"
+                              (click)="onOpenFilePath(art.path, $event)"
+                            >
+                              {{ art.path }}
+                            </a>
+                            <span class="chat-artifact__meta">{{ art.language }} · {{ art.bytes | bytes }}</span>
+                            <span class="chat-artifact__actions">
+                              <button
+                                type="button"
+                                class="chat-artifact__btn"
+                                title="Choose an application to open this file"
+                                (click)="onOpenFilePath(art.path, $event)"
+                              >
+                                Open with…
+                              </button>
+                              <button
+                                type="button"
+                                class="chat-artifact__btn"
+                                (click)="copyRawArtifact(art.id, art.content, $event)"
+                              >
+                                {{ copiedArtifactId() === art.id ? 'Copied!' : 'Copy raw' }}
+                              </button>
+                              <button
+                                type="button"
+                                class="chat-artifact__btn"
+                                (click)="downloadRawArtifact(art.path, art.content, $event)"
+                              >
+                                Download
+                              </button>
+                            </span>
+                          </summary>
+                          <pre class="chat-artifact__code" [attr.data-lang]="art.language"><code [innerHTML]="highlightArtifact(art)"></code></pre>
+                        </details>
+                      }
+                    </div>
+                  }
+                </div>
+
+                <footer class="chat-bubble__actions" aria-label="AI message actions">
+                  <button
+                    type="button"
+                    class="chat-action-btn chat-action-btn--danger"
+                    [disabled]="!store.canEdit()"
+                    title="Delete this AI response"
+                    (click)="onDeleteTurnPart(turn, 'AI', $event)"
+                  >
+                    <rd-icon name="trash" [size]="11" />
+                    <span>Delete</span>
+                  </button>
+
+                  <rd-copy-split-button
+                    [markdown]="turn.rawAssistantMarkdown"
+                    ariaLabel="Copy AI response"
+                  />
+
+                  <button
+                    type="button"
+                    class="chat-action-btn"
+                    [disabled]="!store.canEdit()"
+                    title="Undo / branch from here: moves this AI response and all newer messages into a Branch Archive #N"
+                    (click)="onBranchFrom(turn, 'AI', $event)"
+                  >
+                    <rd-icon name="undo" [size]="11" />
+                    <span>Undo / branch</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    class="chat-action-btn"
+                    [disabled]="!store.canEdit()"
+                    title="Retry with current chat agent configuration (archives old response into Branch Archive #N)"
+                    (click)="onRetryTurn(turn, 'CURRENT', $event)"
+                  >
+                    <rd-icon name="rotate-ccw" [size]="11" />
+                    <span>Retry</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    class="chat-action-btn"
+                    [disabled]="!store.canEdit()"
+                    [title]="'Retry with same agent configuration originally used (' + turn.modelInfo.shortModelName + ')'"
+                    (click)="onRetryTurn(turn, 'SAME_AGENT', $event)"
+                  >
+                    <rd-icon name="refresh" [size]="11" />
+                    <span>Retry same agent</span>
+                  </button>
+                </footer>
+              </article>
+            </div>
+          }
+        }
+      </div>
+    }
+  </div>
+
+  @if (artifactsDrawerOpen()) {
+    <div class="artifacts-backdrop" (click)="toggleArtifactsDrawer()">
+      <section
+        class="artifacts-modal"
+        role="dialog"
+        aria-label="Chat Artifacts & Version History"
+        (click)="$event.stopPropagation()"
+      >
+        <header class="artifacts-modal__head">
+          <div class="artifacts-modal__head-left">
+            <h3 class="artifacts-modal__title">{{ agentSummary().name }} — Chat Artifacts</h3>
+            <span class="artifacts-modal__subtitle">
+              {{ consoleStore.totalChatArtifactsCount() }} artifact{{ consoleStore.totalChatArtifactsCount() === 1 ? '' : 's' }} across chat turns
+            </span>
+          </div>
+          <button
+            type="button"
+            class="artifacts-modal__close"
+            (click)="toggleArtifactsDrawer()"
+            aria-label="Close artifacts panel"
+          >
+            ✕
+          </button>
+        </header>
+
+        @if (consoleStore.chatArtifactTracks().length === 0) {
+          <div class="artifacts-modal__empty">
+            No artifacts have been generated in this chat yet.
+          </div>
+        } @else {
+          <div class="artifacts-modal__body">
+            <aside class="artifacts-modal__sidebar" aria-label="Artifact files">
+              @for (track of consoleStore.chatArtifactTracks(); track track.key) {
+                <button
+                  type="button"
+                  class="artifact-track-item"
+                  [class.is-selected]="selectedArtifactTrack()?.key === track.key"
+                  (click)="selectArtifactTrack(track)"
+                >
+                  <div class="artifact-track-item__top">
+                    <span class="artifact-track-item__path">{{ track.path }}</span>
+                    <span class="artifact-track-item__ver">
+                      {{ track.versions.length > 1 ? (track.versions.length + ' versions') : 'v1' }}
+                    </span>
+                  </div>
+                  <div class="artifact-track-item__sub">
+                    <span>{{ track.language }}</span>
+                    <span>•</span>
+                    <span>
+                      @if (track.latestVersion.tokens > 0) {
+                        {{ track.latestVersion.tokens | number }} tokens
+                      } @else if (track.latestVersion.previewKind === 'image') {
+                        image preview
+                      } @else if (track.latestVersion.previewKind === 'video') {
+                        video preview
+                      } @else if (track.latestVersion.previewKind === 'audio') {
+                        audio preview
+                      } @else {
+                        file preview
+                      }
+                    </span>
+                    <span>•</span>
+                    <span>{{ track.latestVersion.createdAt | relativeTime }}</span>
+                  </div>
+                </button>
+              }
+            </aside>
+
+            @if (selectedArtifactTrack(); as track) {
+              @if (selectedArtifactVersion(); as ver) {
+                <div class="artifacts-modal__viewer">
+                  <div class="artifacts-modal__toolbar">
+                    <div class="artifacts-modal__versions">
+                      <span class="artifacts-modal__toolbar-label">Version:</span>
+                      @for (v of track.versions; track v.id) {
+                        <button
+                          type="button"
+                          class="artifact-ver-pill"
+                          [class.is-active]="ver.versionNumber === v.versionNumber"
+                          (click)="selectArtifactVersion(v.versionNumber)"
+                          [title]="v.promptExcerpt || ('Turn #' + v.turnIndex)"
+                        >
+                          v{{ v.versionNumber }} (Turn #{{ v.turnIndex }})
+                        </button>
+                      }
+                    </div>
+
+                    <div class="artifacts-modal__toolbar-right">
+                      @if (track.versions.length > 1) {
+                        <div class="artifacts-modal__mode-switch">
+                          <button
+                            type="button"
+                            class="artifact-mode-btn"
+                            [class.is-active]="artifactViewMode() === 'code'"
+                            (click)="setArtifactViewMode('code')"
+                          >
+                            Code
+                          </button>
+                          <button
+                            type="button"
+                            class="artifact-mode-btn"
+                            [class.is-active]="artifactViewMode() === 'diff'"
+                            (click)="setArtifactViewMode('diff')"
+                          >
+                            Diff
+                          </button>
+                        </div>
+
+                        @if (artifactViewMode() === 'diff' && compareBaseVersion(); as baseVer) {
+                          <div class="artifacts-modal__compare-select">
+                            <span>vs</span>
+                            @for (v of track.versions; track v.id) {
+                              @if (v.versionNumber !== ver.versionNumber) {
+                                <button
+                                  type="button"
+                                  class="artifact-ver-pill artifact-ver-pill--compact"
+                                  [class.is-active]="baseVer.versionNumber === v.versionNumber"
+                                  (click)="setCompareBaseVersion(v.versionNumber)"
+                                >
+                                  v{{ v.versionNumber }}
+                                </button>
+                              }
+                            }
+                          </div>
+                        }
+                      }
+
+                      <button
+                        type="button"
+                        class="chat-artifact__btn"
+                        title="Choose an application to open this file"
+                        (click)="onOpenFilePath(ver.path, $event)"
+                      >
+                        Open with…
+                      </button>
+                      @if (!ver.previewKind || ver.previewKind === 'code') {
+                        <button
+                          type="button"
+                          class="chat-artifact__btn"
+                          (click)="copyRawArtifact(ver.id, resolvedVersionContent(ver), $event)"
+                        >
+                          {{ copiedArtifactId() === ver.id ? 'Copied!' : 'Copy raw' }}
+                        </button>
+                      }
+                      <button
+                        type="button"
+                        class="chat-artifact__btn"
+                        (click)="downloadRawArtifact(ver.path, resolvedVersionContent(ver), $event, ver.previewUrl)"
+                      >
+                        Download
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="artifacts-modal__meta-bar">
+                    <span class="artifacts-modal__meta-badge">{{ ver.title }}</span>
+                    <a
+                      href="#"
+                      class="rd-filepath-link artifacts-modal__meta-path"
+                      [title]="'Click to choose which app opens ' + ver.path"
+                      (click)="onOpenFilePath(ver.path, $event)"
+                    >
+                      {{ ver.path }}
+                    </a>
+                    <span class="artifacts-modal__meta-info">
+                      v{{ ver.versionNumber }} · Turn #{{ ver.turnIndex }}
+                      @if (ver.bytes > 0) {
+                        · {{ ver.bytes | bytes }}
+                      }
+                      @if (ver.tokens > 0) {
+                        · {{ ver.tokens | number }} tokens
+                      }
+                      · {{ ver.createdAt | relativeTime }}
+                    </span>
+                  </div>
+
+                  @if (ver.previewKind === 'image' && ver.previewUrl) {
+                    <div class="artifacts-modal__media-preview">
+                      <img
+                        class="artifacts-modal__preview-img"
+                        [src]="ver.previewUrl"
+                        [alt]="ver.title"
+                      />
+                    </div>
+                  } @else if (ver.previewKind === 'video' && ver.previewUrl) {
+                    <div class="artifacts-modal__media-preview">
+                      <video
+                        class="artifacts-modal__preview-video"
+                        controls
+                        preload="metadata"
+                        [src]="ver.previewUrl"
+                      ></video>
+                    </div>
+                  } @else if (ver.previewKind === 'audio' && ver.previewUrl) {
+                    <div class="artifacts-modal__media-preview">
+                      <audio
+                        class="artifacts-modal__preview-audio"
+                        controls
+                        preload="metadata"
+                        [src]="ver.previewUrl"
+                      ></audio>
+                    </div>
+                  } @else if (artifactViewMode() === 'diff' && track.versions.length > 1 && compareBaseVersion(); as baseVer) {
+                    <div class="artifacts-modal__diff" role="region" aria-label="Artifact version diff">
+                      <div class="artifacts-modal__diff-header">
+                        Comparing <strong>v{{ baseVer.versionNumber }}</strong> (Turn #{{ baseVer.turnIndex }}) → <strong>v{{ ver.versionNumber }}</strong> (Turn #{{ ver.turnIndex }})
+                      </div>
+                      <div class="diff-table">
+                        @for (line of artifactDiffLines(); track $index) {
+                          <div
+                            class="diff-line"
+                            [class.diff-line--add]="line.kind === 'add'"
+                            [class.diff-line--del]="line.kind === 'del'"
+                          >
+                            <span class="diff-line__num">{{ line.oldLineNum ?? '' }}</span>
+                            <span class="diff-line__num">{{ line.newLineNum ?? '' }}</span>
+                            <span class="diff-line__marker">
+                              {{ line.kind === 'add' ? '+' : line.kind === 'del' ? '-' : ' ' }}
+                            </span>
+                            <span class="diff-line__text" [innerHTML]="highlightRawCode(line.text, track.language)"></span>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  } @else {
+                    <pre class="artifacts-modal__code"><code [innerHTML]="highlightRawCode(resolvedVersionContent(ver), track.language)"></code></pre>
+                  }
+                </div>
+              }
+            }
+          </div>
+        }
+      </section>
+    </div>
+  }
+
+  @if (pendingHumanRequests().length > 0) {
+    <div class="permission-banner" role="region" aria-label="Pending permission or decision request">
+      @for (req of pendingHumanRequests(); track req.id) {
+        <div class="permission-banner__card">
+          <div class="permission-banner__info">
+            <span class="permission-banner__badge">PERMISSION / INPUT REQUIRED</span>
+            <strong class="permission-banner__title">{{ req.title }}</strong>
+            <p class="permission-banner__body">{{ req.body }}</p>
+          </div>
+          <div class="permission-banner__actions">
+            @if (req.options.length > 0) {
+              @for (opt of req.options; track opt.id) {
+                <button
+                  type="button"
+                  class="rd-btn rd-btn--sm"
+                  [class.rd-btn--primary]="opt.id !== 'deny'"
+                  [class.rd-btn--danger]="opt.id === 'deny'"
+                  (click)="onDecisionOptionClick(opt.label, opt.id)"
+                >
+                  <span>{{ opt.label }}</span>
+                </button>
+              }
+            } @else {
+              <button
+                type="button"
+                class="rd-btn rd-btn--primary rd-btn--sm"
+                (click)="onDecisionOptionClick('Approve and continue', 'approve')"
+              >
+                <span>Approve &amp; Continue</span>
+              </button>
+              <button
+                type="button"
+                class="rd-btn rd-btn--danger rd-btn--sm"
+                (click)="onDecisionOptionClick('Deny', 'deny')"
+              >
+                <span>Deny</span>
+              </button>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <rd-agent-chat-bar
+    [agentKey]="agentSummary().key"
+    [agentName]="agentSummary().name"
+    [wide]="wide()"
+    [disabled]="!store.canEdit()"
+    [modelConfig]="parsedConfig()"
+    (modelConfigChange)="onModelConfigChange($event)"
+    (freshStart)="onFreshStart()"
+    (undoLast)="onUndoLastTurn()"
+    (retryLast)="onRetryLastTurn()"
+    (cancelRun)="onCancelRun()"
+    (send)="onSendMessage($event)"
+  />
+</div>

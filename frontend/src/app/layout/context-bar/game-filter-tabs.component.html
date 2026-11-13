@@ -1,0 +1,27 @@
+<div class="context__tabs" role="tablist" aria-label="Game context filter">
+  <button
+    type="button"
+    role="tab"
+    class="context__tab"
+    [class.is-active]="store.selectedGameId() === 'all'"
+    [attr.aria-selected]="store.selectedGameId() === 'all'"
+    (click)="selectGame('all')"
+  >
+    <span>All games</span>
+  </button>
+
+  @for (game of store.games(); track game.id) {
+    <button
+      type="button"
+      role="tab"
+      class="context__tab"
+      [class.is-active]="store.selectedGameId() === game.id"
+      [attr.aria-selected]="store.selectedGameId() === game.id"
+      [style.--game-accent]="game.accentColor"
+      (click)="selectGame(game.id)"
+    >
+      <span class="dot"></span>
+      <span>{{ game.name }}</span>
+    </button>
+  }
+</div>

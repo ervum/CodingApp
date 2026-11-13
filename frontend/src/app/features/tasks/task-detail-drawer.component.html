@@ -1,0 +1,168 @@
+<div class="task-drawer">
+  <header class="task-drawer__header">
+    <div class="task-drawer__top">
+      <rd-status-pill [status]="detail().status" />
+      <span class="task-drawer__priority">{{ detail().priority }}</span>
+      <button
+        type="button"
+        class="rd-btn rd-btn--ghost rd-btn--sm task-drawer__close"
+        (click)="close.emit()"
+        aria-label="Close drawer"
+      >
+        <rd-icon name="x" [size]="16" />
+      </button>
+    </div>
+    <h2 class="task-drawer__title">{{ detail().title }}</h2>
+    <div class="task-drawer__meta">
+      <rd-agent-avatar [agent]="agentInfo()" size="xs" [showStatus]="false" />
+      <span>{{ agentInfo().name }} · created {{ detail().createdAt | relativeTime }}</span>
+    </div>
+  </header>
+
+  <div class="task-drawer__body">
+    @if (editing()) {
+      <div class="task-drawer__form">
+        <div class="rd-field">
+          <label class="rd-label">Title</label>
+          <input
+            type="text"
+            class="rd-input"
+            [ngModel]="editTitle()"
+            (ngModelChange)="editTitle.set($event)"
+          />
+        </div>
+        <div class="rd-field">
+          <label class="rd-label">Priority</label>
+          <select
+            class="rd-select"
+            [ngModel]="editPriority()"
+            (ngModelChange)="editPriority.set($event)"
+          >
+            <option value="LOW">LOW</option>
+            <option value="NORMAL">NORMAL</option>
+            <option value="HIGH">HIGH</option>
+            <option value="URGENT">URGENT</option>
+          </select>
+        </div>
+        <div class="rd-field">
+          <label class="rd-label">Brief (Markdown)</label>
+          <textarea
+            class="rd-textarea"
+            rows="5"
+            [ngModel]="editBrief()"
+            (ngModelChange)="editBrief.set($event)"
+          ></textarea>
+        </div>
+        <div class="task-drawer__edit-actions">
+          <button
+            type="button"
+            class="rd-btn rd-btn--primary rd-btn--sm"
+            [disabled]="busy()"
+            (click)="saveEdit()"
+          >
+            <span>Save</span>
+          </button>
+          <button
+            type="button"
+            class="rd-btn rd-btn--ghost rd-btn--sm"
+            (click)="editing.set(false)"
+          >
+            <span>Cancel</span>
+          </button>
+        </div>
+      </div>
+    } @else {
+      <section class="task-drawer__section">
+        <h3 class="task-drawer__section-title">BRIEF</h3>
+        <rd-markdown-view [markdown]="detail().brief" />
+      </section>
+    }
+
+    @if (detail().resultSummary; as summary) {
+      <section class="task-drawer__section">
+        <h3 class="task-drawer__section-title">RESULT SUMMARY</h3>
+        <rd-markdown-view [markdown]="summary" />
+      </section>
+    }
+
+    @if (detail().dependsOn.length > 0) {
+      <section class="task-drawer__section">
+        <h3 class="task-drawer__section-title">DEPENDENCIES ({{ detail().dependsOn.length }})</h3>
+        <div class="task-drawer__chips">
+          @for (depId of detail().dependsOn; track depId) {
+            <span class="task-drawer__chip">{{ depId }}</span>
+          }
+        </div>
+      </section>
+    }
+
+    @if (detail().subtasks.length > 0) {
+      <section class="task-drawer__section">
+        <h3 class="task-drawer__section-title">SUBTASKS ({{ detail().subtasks.length }})</h3>
+        <div class="task-drawer__list">
+          @for (sub of detail().subtasks; track sub.id) {
+            <div class="task-drawer__row">
+              <rd-status-pill [status]="sub.status" />
+              <span class="task-drawer__row-title">{{ sub.title }}</span>
+            </div>
+          }
+        </div>
+      </section>
+    }
+
+    <section class="task-drawer__section">
+      <h3 class="task-drawer__section-title">RUNS ({{ detail().runs.length }})</h3>
+      @if (detail().runs.length === 0) {
+        <p class="rd-text-muted">No runs recorded yet.</p>
+      } @else {
+        <div class="task-drawer__list">
+          @for (run of detail().runs; track run.id) {
+            <a
+              class="task-drawer__run"
+              [routerLink]="['/s', studioSlug(), 'team', run.agentKey]"
+            >
+              <rd-status-pill [status]="run.status" />
+              <span class="task-drawer__run-model">{{ run.modelId }}</span>
+              <span class="task-drawer__run-time">{{ run.startedAt | relativeTime }}</span>
+            </a>
+          }
+        </div>
+      }
+    </section>
+  </div>
+
+  @if (store.canEdit()) {
+    <footer class="task-drawer__footer">
+      <button
+        type="button"
+        class="rd-btn rd-btn--secondary rd-btn--sm"
+        [disabled]="busy()"
+        (click)="editing.set(true)"
+      >
+        <rd-icon name="edit" [size]="14" />
+        <span>Edit</span>
+      </button>
+      @if (canRetry()) {
+        <button
+          type="button"
+          class="rd-btn rd-btn--primary rd-btn--sm"
+          [disabled]="busy()"
+          (click)="retryTask()"
+        >
+          <rd-icon name="refresh" [size]="14" />
+          <span>Retry</span>
+        </button>
+      }
+      @if (canCancel()) {
+        <button
+          type="button"
+          class="rd-btn rd-btn--danger rd-btn--sm"
+          [disabled]="busy()"
+          (click)="cancelTask()"
+        >
+          <span>Cancel task</span>
+        </button>
+      }
+    </footer>
+  }
+</div>

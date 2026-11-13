@@ -1,0 +1,220 @@
+<section class="bindings" aria-label="Agent model bindings">
+  <header class="bindings__header">
+    <div>
+      <h2 class="bindings__title">AGENT MODEL BINDINGS (15 AGENTS)</h2>
+      <p class="rd-text-muted">
+        Bind each specialist agent to a provider connection and runtime model ID.
+      </p>
+    </div>
+    @if (store.isAdmin() && rows().length > 0) {
+      <button
+        type="button"
+        class="rd-btn rd-btn--secondary rd-btn--sm"
+        [disabled]="applyingAll()"
+        (click)="applyToAll()"
+      >
+        <span>Apply Lead's model to all</span>
+      </button>
+    }
+  </header>
+
+  <div class="bindings__table-wrap">
+    <table class="bindings__table">
+      <thead>
+        <tr>
+          <th>Agent</th>
+          <th>Connection</th>
+          <th>Model ID</th>
+          <th>Temp</th>
+          <th>Max Tokens</th>
+          <th>Persona &amp; Tools</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of rows(); track row.key) {
+          <tr>
+            <td>
+              <div class="bindings__agent">
+                <rd-agent-avatar [agent]="row" size="sm" [showStatus]="false" />
+                <div>
+                  <div class="bindings__name">{{ row.name }}</div>
+                  <div class="bindings__role">{{ row.title }}</div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <select
+                class="rd-select"
+                [disabled]="!store.isAdmin()"
+                [ngModel]="row.llmConnectionId ?? ''"
+                (ngModelChange)="onConnectionChange(row, $event)"
+                [attr.aria-label]="row.name + ' connection'"
+              >
+                <option value="">Unbound</option>
+                @for (c of connections(); track c.id) {
+                  <option [value]="c.id">{{ c.label }} ({{ c.provider }})</option>
+                }
+              </select>
+            </td>
+            <td>
+              <input
+                type="text"
+                class="rd-input bindings__model-input"
+                [attr.list]="'models-' + row.key"
+                placeholder="Select or type model ID..."
+                [disabled]="!store.isAdmin()"
+                [ngModel]="row.modelId ?? ''"
+                (ngModelChange)="onModelChange(row, $event)"
+                [attr.aria-label]="row.name + ' model ID'"
+              />
+              <datalist [id]="'models-' + row.key">
+                @for (m of modelsFor(row.llmConnectionId); track m.id) {
+                  <option [value]="m.id">{{ m.displayName }}</option>
+                }
+              </datalist>
+
+              @if (row.key === 'splash') {
+                <div class="bindings__splash-extra">
+                  <select
+                    class="rd-select"
+                    [disabled]="!store.isAdmin()"
+                    [ngModel]="row.imageConnectionId ?? ''"
+                    (ngModelChange)="onImageConnChange(row, $event)"
+                    aria-label="Splash image connection"
+                  >
+                    <option value="">Image connection (optional)</option>
+                    @for (c of connections(); track c.id) {
+                      <option [value]="c.id">{{ c.label }}</option>
+                    }
+                  </select>
+                  <input
+                    type="text"
+                    class="rd-input bindings__model-input"
+                    list="models-splash-img"
+                    placeholder="Image model ID..."
+                    [disabled]="!store.isAdmin()"
+                    [ngModel]="row.imageModelId ?? ''"
+                    (ngModelChange)="onImageModelChange(row, $event)"
+                    aria-label="Splash image model ID"
+                  />
+                  <datalist id="models-splash-img">
+                    @for (m of modelsFor(row.imageConnectionId); track m.id) {
+                      <option [value]="m.id">{{ m.displayName }}</option>
+                    }
+                  </datalist>
+                </div>
+              }
+            </td>
+            <td>
+              <input
+                type="number"
+                class="rd-input bindings__num"
+                step="0.1"
+                min="0"
+                max="2"
+                [disabled]="!store.isAdmin()"
+                [ngModel]="row.temperature"
+                (ngModelChange)="onTempChange(row, $event)"
+                [attr.aria-label]="row.name + ' temperature'"
+              />
+            </td>
+            <td>
+              <input
+                type="number"
+                class="rd-input bindings__tokens"
+                step="256"
+                min="256"
+                max="64000"
+                [disabled]="!store.isAdmin()"
+                [ngModel]="row.temperature !== undefined ? row.maxOutputTokens : 4096"
+                (ngModelChange)="onMaxTokensChange(row, $event)"
+                [attr.aria-label]="row.name + ' max output tokens'"
+              />
+            </td>
+            <td>
+              <button
+                type="button"
+                class="rd-btn rd-btn--secondary rd-btn--sm"
+                (click)="openPersonaEditor(row)"
+              >
+                <span>Persona &amp; Tools ({{ row.tools.length }})</span>
+              </button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <rd-dialog
+    [(open)]="personaDialogOpen"
+    [title]="editingAgent() ? 'Edit ' + editingAgent()!.name + ' Persona & Allowed Tools' : 'Edit Agent Persona'"
+    width="680px"
+  >
+    @if (editingAgent(); as ag) {
+      <form class="bindings__persona-form" (ngSubmit)="savePersonaAndTools()">
+        <div class="rd-field">
+          <label class="rd-label">System Prompt (min 50 chars)</label>
+          <textarea
+            class="rd-input bindings__prompt-textarea"
+            name="systemPrompt"
+            rows="8"
+            [disabled]="!store.isAdmin()"
+            [ngModel]="draftSystemPrompt()"
+            (ngModelChange)="draftSystemPrompt.set($event)"
+          ></textarea>
+        </div>
+
+        <div class="rd-field">
+          <div class="bindings__tools-header">
+            <label class="rd-label">Allowed Tools ({{ draftTools().size }} / {{ allToolDefs.length }})</label>
+            @if (store.isAdmin()) {
+              <button
+                type="button"
+                class="rd-btn rd-btn--ghost rd-btn--sm"
+                (click)="resetDraftToolsToDefault()"
+              >
+                Reset to Default Roster Tools
+              </button>
+            }
+          </div>
+          <div class="bindings__tools-grid">
+            @for (tool of allToolDefs; track tool.name) {
+              <label class="bindings__tool-item" [title]="tool.description">
+                <input
+                  type="checkbox"
+                  [disabled]="!store.isAdmin()"
+                  [checked]="draftTools().has(tool.name)"
+                  (change)="toggleDraftTool(tool.name)"
+                />
+                <div class="bindings__tool-meta">
+                  <span class="bindings__tool-name">{{ tool.name }}</span>
+                  <span class="bindings__tool-label">{{ tool.label }}</span>
+                </div>
+              </label>
+            }
+          </div>
+        </div>
+
+        <div class="bindings__persona-actions">
+          <button
+            type="button"
+            class="rd-btn rd-btn--ghost"
+            (click)="personaDialogOpen.set(false)"
+          >
+            Close
+          </button>
+          @if (store.isAdmin()) {
+            <button
+              type="submit"
+              class="rd-btn rd-btn--primary"
+              [disabled]="draftSystemPrompt().trim().length < 50 || savingPersona()"
+            >
+              {{ savingPersona() ? 'Saving…' : 'Save Persona & Tools' }}
+            </button>
+          }
+        </div>
+      </form>
+    }
+  </rd-dialog>
+</section>

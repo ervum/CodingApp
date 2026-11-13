@@ -1,0 +1,19 @@
+<div class="home">
+  <section class="home__hero-card">
+    <div class="home__header">
+      <rd-greeting-header />
+    </div>
+    <div class="home__prompt">
+      <rd-prompt-bar [disabled]="busy() || !store.canEdit()" (submitted)="onPromptSubmit($event)" />
+    </div>
+  </section>
+
+  <div class="home__columns">
+    <div class="home__needs">
+      <rd-needs-you-column />
+    </div>
+    <div class="home__live">
+      <rd-live-now-panel />
+    </div>
+  </div>
+</div>

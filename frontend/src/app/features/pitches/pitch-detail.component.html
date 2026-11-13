@@ -1,0 +1,138 @@
+<article class="pitch">
+  <header class="pitch__header">
+    <div class="pitch__top-row">
+      <span class="pitch__genre">{{ pitch().genre }}</span>
+      <rd-status-pill [status]="pitch().status" />
+      <span class="pitch__author">
+        <rd-agent-avatar [agent]="authorAgent()" size="xs" [showStatus]="false" />
+        <span>by {{ authorAgent().name }} · {{ pitch().updatedAt | relativeTime }}</span>
+      </span>
+    </div>
+
+    <h1 class="pitch__title">{{ pitch().title }}</h1>
+    <p class="pitch__logline">{{ pitch().logline }}</p>
+  </header>
+
+  <section class="pitch__metrics" aria-label="Market metrics">
+    @for (metric of pitch().metrics; track metric.label) {
+      <rd-metric-callout [metric]="metric" />
+    }
+  </section>
+
+  <section class="pitch__banners" aria-label="Market thesis">
+    <rd-pitch-banner kind="changed" [text]="pitch().whatChanged" />
+    <rd-pitch-banner kind="different" [text]="pitch().howDifferent" />
+  </section>
+
+  @if (pitch().comparables.length > 0) {
+    <section class="pitch__comparables">
+      <span class="pitch__comparables-label">COMPARABLES</span>
+      <div class="pitch__comparables-list">
+        @for (comp of pitch().comparables; track comp.universeId) {
+          <a
+            class="pitch__comp-chip"
+            [routerLink]="['/s', studioSlug(), 'market']"
+            [queryParams]="{ q: comp.name }"
+          >
+            <rd-icon name="trending-up" [size]="13" />
+            <span>{{ comp.name }}</span>
+          </a>
+        }
+      </div>
+    </section>
+  }
+
+  @if (pitch().feedback) {
+    <div class="pitch__feedback">
+      <strong>Requested changes:</strong> {{ pitch().feedback }}
+    </div>
+  }
+
+  <section class="pitch__sections" aria-label="Pitch breakdown">
+    @for (sec of orderedSections(); track sec.key; let idx = $index) {
+      <rd-accordion [title]="sec.title" [open]="idx === 0">
+        <rd-markdown-view [markdown]="sec.markdown" />
+      </rd-accordion>
+    }
+  </section>
+
+  <footer class="pitch__actions">
+    @if (pitch().status === 'PICKED') {
+      <div class="pitch__picked-banner">
+        <rd-icon name="check" [size]="16" />
+        <span>Picked for production</span>
+        @if (pickedGame(); as g) {
+          <a class="rd-btn rd-btn--secondary rd-btn--sm" [routerLink]="['/s', studioSlug(), 'games', g.slug]">
+            Open {{ g.name }} →
+          </a>
+        }
+      </div>
+    } @else if (canAct()) {
+      <button
+        type="button"
+        class="rd-btn rd-btn--primary"
+        [disabled]="busy()"
+        (click)="pick.emit()"
+      >
+        <rd-icon name="check" [size]="16" />
+        <span>Pick this game</span>
+      </button>
+
+      <button
+        type="button"
+        class="rd-btn rd-btn--secondary"
+        [disabled]="busy()"
+        (click)="editDialogOpen.set(true)"
+      >
+        <rd-icon name="edit" [size]="15" />
+        <span>Edit &amp; approve</span>
+      </button>
+
+      <button
+        type="button"
+        class="rd-btn rd-btn--ghost"
+        [disabled]="busy()"
+        (click)="changesDialogOpen.set(true)"
+      >
+        <span>Request changes</span>
+      </button>
+    }
+  </footer>
+</article>
+
+<rd-pitch-edit-dialog
+  [pitch]="pitch()"
+  [(open)]="editDialogOpen"
+  (save)="editApprove.emit($event)"
+/>
+
+<rd-dialog [(open)]="changesDialogOpen" title="Request changes from Pulse" width="480px">
+  <form class="changes-form" (ngSubmit)="submitChangesRequest()">
+    <label class="rd-field">
+      <span class="rd-field__label">What should Pulse revise?</span>
+      <textarea
+        class="rd-textarea"
+        name="feedback"
+        rows="4"
+        required
+        minlength="5"
+        placeholder="e.g. Tighten the 5-minute loop and add a clearer starter monetization pack…"
+        [ngModel]="feedbackText()"
+        (ngModelChange)="feedbackText.set($event)"
+      ></textarea>
+    </label>
+
+    <div class="changes-form__actions">
+      <button type="button" class="rd-btn rd-btn--ghost" (click)="changesDialogOpen.set(false)">
+        Cancel
+      </button>
+      <button
+        type="submit"
+        class="rd-btn rd-btn--primary"
+        [disabled]="feedbackText().trim().length < 5"
+      >
+        Send to Pulse
+      </button>
+    </div>
+  </form>
+</rd-dialog>

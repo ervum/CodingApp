@@ -1,0 +1,6 @@
+<div class="avatar" [attr.title]="resolvedAgent().name">
+  <rd-icon [name]="iconName()" [size]="iconSize()" />
+  @if (showStatus()) {
+    <span class="avatar__dot" [attr.data-status]="resolvedAgent().status"></span>
+  }
+</div>

@@ -1,0 +1,29 @@
+@use 'rd';
+
+:host {
+  display: inline-flex;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 rd.space(1.5);
+  border-radius: rd.radius('pill');
+  background: rd.color('bg-4');
+  color: rd.color('text-2');
+  font: #{rd.fw('semibold')} #{rd.fs('2xs')}/1 var(--rd-font-ui);
+  @include rd.numeric;
+}
+
+:host([data-tone='accent']) .badge {
+  background: rd.color('primary');
+  color: rd.color('text-1');
+}
+
+:host([data-tone='warning']) .badge {
+  background: rd.color('warning-soft');
+  color: rd.color('warning');
+}

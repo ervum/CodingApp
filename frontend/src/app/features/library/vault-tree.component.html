@@ -1,0 +1,119 @@
+<div class="tree">
+  <div class="tree__header">
+    <span class="tree__title">KNOWLEDGE VAULT</span>
+    @if (canWrite()) {
+      <div class="tree__actions">
+        <button
+          type="button"
+          class="rd-btn rd-btn--ghost rd-btn--sm"
+          title="New document"
+          aria-label="New document"
+          (click)="openNewDocDialog()"
+        >
+          <rd-icon name="plus" [size]="14" />
+        </button>
+        <button
+          type="button"
+          class="rd-btn rd-btn--ghost rd-btn--sm"
+          title="New folder"
+          aria-label="New folder"
+          (click)="newFolderDialogOpen.set(true)"
+        >
+          <rd-icon name="folder" [size]="14" />
+        </button>
+      </div>
+    }
+  </div>
+
+  <div class="tree__search">
+    <rd-icon name="search" [size]="13" />
+    <input
+      type="search"
+      class="rd-input tree__search-input"
+      placeholder="Filter vault…"
+      [ngModel]="filter()"
+      (ngModelChange)="filter.set($event)"
+      aria-label="Filter vault documents"
+    />
+  </div>
+
+  <div class="tree__list" role="tree" aria-label="Obsidian Knowledge Vault">
+    @for (node of filteredNodes(); track node.id) {
+      <rd-vault-tree-node
+        [node]="node"
+        [depth]="0"
+        [selectedDocId]="selectedDocId()"
+        [expanded]="expanded()"
+        (toggle)="onToggleFolder($event)"
+        (openDoc)="openDoc.emit($event)"
+      />
+    }
+  </div>
+</div>
+
+<rd-dialog [(open)]="newDocDialogOpen" title="Create vault document" width="440px">
+  <form class="dialog-form" (ngSubmit)="submitNewDoc()">
+    <label class="rd-field">
+      <span class="rd-field__label">Folder</span>
+      <select
+        class="rd-select"
+        name="folderId"
+        required
+        [ngModel]="newDocFolderId()"
+        (ngModelChange)="newDocFolderId.set($event)"
+      >
+        @for (f of folders(); track f.id) {
+          <option [value]="f.id">{{ f.name }}</option>
+        }
+      </select>
+    </label>
+
+    <label class="rd-field">
+      <span class="rd-field__label">Document title</span>
+      <input
+        type="text"
+        class="rd-input"
+        name="title"
+        required
+        placeholder="e.g. 05b HUD Safe Zones"
+        [ngModel]="newDocTitle()"
+        (ngModelChange)="newDocTitle.set($event)"
+      />
+    </label>
+
+    <div class="dialog-form__actions">
+      <button type="button" class="rd-btn rd-btn--ghost" (click)="newDocDialogOpen.set(false)">
+        Cancel
+      </button>
+      <button type="submit" class="rd-btn rd-btn--primary" [disabled]="!newDocTitle().trim()">
+        Create document
+      </button>
+    </div>
+  </form>
+</rd-dialog>
+
+<rd-dialog [(open)]="newFolderDialogOpen" title="Create vault folder" width="420px">
+  <form class="dialog-form" (ngSubmit)="submitNewFolder()">
+    <label class="rd-field">
+      <span class="rd-field__label">Folder name</span>
+      <input
+        type="text"
+        class="rd-input"
+        name="name"
+        required
+        placeholder="e.g. 14 Audio & SFX"
+        [ngModel]="newFolderName()"
+        (ngModelChange)="newFolderName.set($event)"
+      />
+    </label>
+
+    <div class="dialog-form__actions">
+      <button type="button" class="rd-btn rd-btn--ghost" (click)="newFolderDialogOpen.set(false)">
+        Cancel
+      </button>
+      <button type="submit" class="rd-btn rd-btn--primary" [disabled]="!newFolderName().trim()">
+        Create folder
+      </button>
+    </div>
+  </form>
+</rd-dialog>

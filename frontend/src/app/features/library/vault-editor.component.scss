@@ -1,0 +1,119 @@
+@use 'rd';
+
+:host {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  height: 100%;
+  min-height: 0;
+}
+
+.editor__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: rd.space(3);
+  padding: rd.space(2) rd.space(4);
+  background: rd.color('bg-1');
+  border-bottom: 1px solid rd.color('border');
+}
+
+.editor__title-input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: 0;
+  color: rd.color('text-1');
+  font-size: rd.fs('base');
+  font-weight: rd.fw('semibold');
+  padding: rd.space(1) rd.space(2);
+  border-radius: rd.radius('xs');
+
+  &:focus {
+    outline: none;
+    background: rd.color('bg-2');
+  }
+}
+
+.editor__ToolbarRight {
+  display: flex;
+  align-items: center;
+  gap: rd.space(2.5);
+}
+
+.editor__status {
+  font-family: var(--rd-font-mono);
+  font-size: rd.fs('xs');
+  color: rd.color('text-3');
+
+  &[data-state='dirty'],
+  &[data-state='saving'] {
+    color: rd.color('warning');
+  }
+
+  &[data-state='conflict'],
+  &[data-state='error'] {
+    color: rd.color('danger');
+  }
+}
+
+.editor__modes {
+  display: inline-flex;
+  background: rd.color('bg-2');
+  border: 1px solid rd.color('border');
+  border-radius: rd.radius('sm');
+  padding: 2px;
+}
+
+.editor__mode-btn {
+  height: 24px;
+  padding: 0 rd.space(2.5);
+  border-radius: rd.radius('xs');
+  font-size: rd.fs('xs');
+  color: rd.color('text-2');
+  @include rd.interactive;
+
+  &.is-active {
+    background: rd.color('bg-3');
+    color: rd.color('text-1');
+  }
+}
+
+.editor__conflict {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: rd.space(2);
+  padding: rd.space(2) rd.space(4);
+  background: rd.color('warning-soft');
+  border-bottom: 1px solid rd.color('warning');
+  color: rd.color('warning');
+  font-size: rd.fs('xs');
+}
+
+.editor__conflict-actions {
+  display: flex;
+  gap: rd.space(1.5);
+}
+
+.editor__textarea {
+  grid-row: 3;
+  width: 100%;
+  height: 100%;
+  font-family: var(--rd-font-mono);
+  font-size: rd.fs('md');
+  line-height: rd.lh('relaxed');
+  tab-size: 2;
+  padding: rd.space(5);
+  background: rd.color('bg-0');
+  color: rd.color('text-1');
+  border: 0;
+  resize: none;
+  white-space: pre;
+  overflow: auto;
+  @include rd.scrollbar;
+
+  &:focus {
+    outline: none;
+  }
+}

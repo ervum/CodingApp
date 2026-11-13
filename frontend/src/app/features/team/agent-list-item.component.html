@@ -1,0 +1,26 @@
+<button
+  type="button"
+  class="agent-item"
+  [class.is-selected]="selected()"
+  [attr.aria-selected]="selected()"
+  (click)="select.emit(agent().key)"
+>
+  <div class="agent-item__avatar">
+    <rd-agent-avatar [agentKey]="agent().key" size="md" />
+  </div>
+  <div class="agent-item__body">
+    <div class="agent-item__top">
+      <span class="agent-item__name">{{ agent().name }}</span>
+      <span class="agent-item__time">14m</span>
+    </div>
+    <div class="agent-item__bottom">
+      <span class="agent-item__snippet">{{ snippet() }}</span>
+    </div>
+    @if (hasCheck()) {
+      <div class="agent-item__check">
+        <span class="agent-item__check-dot"></span>
+        <span>1 to check</span>
+      </div>
+    }
+  </div>
+</button>

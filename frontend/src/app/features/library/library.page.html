@@ -1,0 +1,428 @@
+<div class="library-shell">
+  <header class="library__header">
+    <span class="library__eyebrow">
+      {{ assets().length }} assets · {{ systems.length }} systems · {{ vaultDocCount() }} vault docs
+    </span>
+    <h1 class="library__title">Library</h1>
+    <p class="library__subtitle">
+      Things the agents made that are worth keeping. When a new game starts, they pull from here first instead of rebuilding.
+    </p>
+  </header>
+
+  <nav class="library__tabs" aria-label="Library tabs">
+    <button
+      type="button"
+      class="library__tab"
+      [class.is-active]="activeTab() === 'ASSETS'"
+      (click)="activeTab.set('ASSETS')"
+    >
+      <span>Assets</span>
+      <span class="library__tab-count">{{ assets().length }}</span>
+    </button>
+
+    <button
+      type="button"
+      class="library__tab"
+      [class.is-active]="activeTab() === 'SYSTEMS'"
+      (click)="activeTab.set('SYSTEMS')"
+    >
+      <span>Systems</span>
+      <span class="library__tab-count">{{ systems.length }}</span>
+    </button>
+
+    <button
+      type="button"
+      class="library__tab"
+      [class.is-active]="activeTab() === 'VAULT'"
+      (click)="activeTab.set('VAULT')"
+    >
+      <span>Vault Docs</span>
+      <span class="library__tab-count">{{ vaultDocCount() }}</span>
+    </button>
+  </nav>
+
+  @switch (activeTab()) {
+    @case ('ASSETS') {
+      <div class="assets-toolbar">
+        <input
+          type="text"
+          class="assets-toolbar__search"
+          placeholder="Search assets by name, kind, or rbxassetid..."
+          [ngModel]="assetSearchQuery()"
+          (ngModelChange)="assetSearchQuery.set($event)"
+        />
+        <select
+          class="assets-toolbar__select"
+          [ngModel]="assetKindFilter()"
+          (ngModelChange)="assetKindFilter.set($event)"
+          aria-label="Filter assets by kind"
+        >
+          <option value="ALL">All kinds</option>
+          <option value="MESH">3D Mesh</option>
+          <option value="AUDIO">Audio</option>
+          <option value="IMAGE">Image</option>
+          <option value="DECAL">Decal</option>
+          <option value="ANIMATION">Animation</option>
+          <option value="OTHER">Other</option>
+        </select>
+        @if (studioStore.canEdit()) {
+          <button
+            type="button"
+            class="rd-btn rd-btn--primary rd-btn--sm"
+            (click)="createAssetModalOpen.set(true)"
+          >
+            <rd-icon name="plus" [size]="14" />
+            <span>Register Asset</span>
+          </button>
+        }
+      </div>
+
+      <div class="assets-grid">
+        @for (asset of assets(); track asset.id) {
+          <article class="asset-card" [style.--asset-accent]="asset.accent">
+            <div class="asset-card__preview">
+              <div class="asset-card__icon">
+                <rd-icon [name]="asset.icon" [size]="24" />
+              </div>
+              <span class="asset-card__cat">{{ asset.category }}</span>
+            </div>
+            <div class="asset-card__body">
+              <h2 class="asset-card__name">{{ asset.name }}</h2>
+              <span class="asset-card__meta">
+                {{ asset.category }} · {{ asset.usedInLabel }}
+              </span>
+              @if (asset.notes) {
+                <p class="asset-card__notes">{{ asset.notes }}</p>
+              }
+              @if (asset.category === 'audio' && asset.mediaUrl) {
+                <audio controls [src]="asset.mediaUrl" class="asset-card__audio"></audio>
+              }
+              @if (asset.robloxAssetId) {
+                <button
+                  type="button"
+                  class="rd-btn rd-btn--secondary rd-btn--sm"
+                  (click)="copyRobloxAssetId(asset.robloxAssetId, $event)"
+                >
+                  Copy rbxassetid://{{ asset.robloxAssetId }}
+                </button>
+              }
+            </div>
+          </article>
+        }
+      </div>
+
+      @if (createAssetModalOpen()) {
+        <div class="library-modal-backdrop" (click)="createAssetModalOpen.set(false)">
+          <div
+            class="library-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Register studio asset"
+            (click)="$event.stopPropagation()"
+          >
+            <header class="library-modal__header">
+              <h2>Register Studio Asset</h2>
+              <button
+                type="button"
+                class="rd-btn rd-btn--ghost rd-btn--sm"
+                (click)="createAssetModalOpen.set(false)"
+              >
+                Close
+              </button>
+            </header>
+            <div class="library-modal__body">
+              <label class="rd-field">
+                <span class="rd-label">Name</span>
+                <input
+                  type="text"
+                  class="rd-input"
+                  placeholder="e.g. Coin Pickup Chime"
+                  [ngModel]="newAssetName()"
+                  (ngModelChange)="newAssetName.set($event)"
+                />
+              </label>
+              <label class="rd-field">
+                <span class="rd-label">Kind</span>
+                <select
+                  class="rd-select"
+                  [ngModel]="newAssetKind()"
+                  (ngModelChange)="newAssetKind.set($event)"
+                >
+                  <option value="MESH">MESH</option>
+                  <option value="AUDIO">AUDIO</option>
+                  <option value="IMAGE">IMAGE</option>
+                  <option value="DECAL">DECAL</option>
+                  <option value="ANIMATION">ANIMATION</option>
+                  <option value="OTHER">OTHER</option>
+                </select>
+              </label>
+              <label class="rd-field">
+                <span class="rd-label">Roblox Asset ID (Numeric, optional)</span>
+                <input
+                  type="text"
+                  class="rd-input"
+                  placeholder="e.g. 9118823101"
+                  [ngModel]="newAssetRobloxId()"
+                  (ngModelChange)="newAssetRobloxId.set($event)"
+                />
+              </label>
+              <label class="rd-field">
+                <span class="rd-label">Tags (comma separated)</span>
+                <input
+                  type="text"
+                  class="rd-input"
+                  placeholder="sfx, ui, currency"
+                  [ngModel]="newAssetTags()"
+                  (ngModelChange)="newAssetTags.set($event)"
+                />
+              </label>
+              <label class="rd-field">
+                <span class="rd-label">Notes</span>
+                <input
+                  type="text"
+                  class="rd-input"
+                  placeholder="How and where agents should reuse this asset"
+                  [ngModel]="newAssetNotes()"
+                  (ngModelChange)="newAssetNotes.set($event)"
+                />
+              </label>
+            </div>
+            <footer class="library-modal__footer">
+              <button
+                type="button"
+                class="rd-btn rd-btn--primary rd-btn--sm"
+                [disabled]="creatingAsset() || !newAssetName().trim()"
+                (click)="submitCreateAsset()"
+              >
+                {{ creatingAsset() ? 'Saving…' : 'Save Asset' }}
+              </button>
+            </footer>
+          </div>
+        </div>
+      }
+    }
+
+    @case ('SYSTEMS') {
+      <div class="systems-stack">
+        @for (sys of systems; track sys.id) {
+          <article class="system-card">
+            <div class="system-card__head">
+              <h2 class="system-card__name">{{ sys.name }}</h2>
+              <span class="system-card__pill">{{ sys.usedInLabel }}</span>
+            </div>
+            <p class="system-card__desc">{{ sys.description }}</p>
+          </article>
+        }
+      </div>
+    }
+
+    @case ('VAULT') {
+      <div class="vault-subbar">
+        <div class="vault-subbar__left">
+          <button
+            type="button"
+            class="rd-btn rd-btn--secondary rd-btn--sm"
+            [class.is-active]="libraryStore.vaultViewMode() === 'editor'"
+            (click)="libraryStore.vaultViewMode.set('editor')"
+          >
+            Document Editor
+          </button>
+          <button
+            type="button"
+            class="rd-btn rd-btn--secondary rd-btn--sm"
+            [class.is-active]="libraryStore.vaultViewMode() === 'graph'"
+            (click)="libraryStore.vaultViewMode.set('graph'); libraryStore.loadGraph()"
+          >
+            Knowledge Graph ({{ libraryStore.graph().nodes.length }})
+          </button>
+        </div>
+
+        @if (libraryStore.doc()) {
+          <button
+            type="button"
+            class="rd-btn rd-btn--ghost rd-btn--sm"
+            (click)="revisionsDrawerOpen.set(!revisionsDrawerOpen())"
+          >
+            History ({{ libraryStore.revisions().length }})
+          </button>
+        }
+      </div>
+
+      @if (libraryStore.vaultViewMode() === 'graph') {
+        <div class="vault-graph-card">
+          <svg
+            class="vault-graph-svg"
+            [attr.viewBox]="'0 0 ' + graphLayout().width + ' ' + graphLayout().height"
+          >
+            @for (edge of graphLayout().edges; track edge.id) {
+              <line
+                [attr.x1]="edge.x1"
+                [attr.y1]="edge.y1"
+                [attr.x2]="edge.x2"
+                [attr.y2]="edge.y2"
+                class="vault-graph-edge"
+                [class.is-broken]="edge.broken"
+              />
+            }
+            @for (node of graphLayout().nodes; track node.id) {
+              <g
+                class="vault-graph-node"
+                [attr.transform]="'translate(' + node.x + ',' + node.y + ')'"
+                (click)="onOpenDoc(node.id)"
+              >
+                <circle
+                  [attr.r]="node.alwaysInject ? 18 : 13"
+                  class="vault-graph-circle"
+                  [class.is-always]="node.alwaysInject"
+                />
+                <text y="28" text-anchor="middle" class="vault-graph-label">
+                  {{ node.title }}
+                </text>
+              </g>
+            }
+          </svg>
+        </div>
+      } @else {
+        <div class="vault-workspace">
+          <aside class="library__tree">
+            <rd-vault-tree
+              [nodes]="libraryStore.tree()"
+              [selectedDocId]="libraryStore.docId()"
+              [canWrite]="studioStore.canEdit()"
+              (openDoc)="onOpenDoc($event)"
+              (createDoc)="libraryStore.createDoc($event.folderId, $event.title)"
+              (createFolder)="libraryStore.createFolder($event.parentId, $event.name)"
+            />
+          </aside>
+
+          <section class="library__editor">
+            @if (libraryStore.doc(); as d) {
+              <rd-vault-editor
+                [text]="libraryStore.draft()"
+                (textChange)="libraryStore.edit($event)"
+                [title]="libraryStore.titleDraft()"
+                (titleChange)="libraryStore.editTitle($event)"
+                [saveState]="libraryStore.saveState()"
+                [version]="d.version"
+                [readonly]="!studioStore.canEdit()"
+                [mode]="libraryStore.mode()"
+                (modeChange)="onModeChange($event)"
+                [conflictVersion]="libraryStore.conflict()?.currentVersion ?? null"
+                (save)="libraryStore.save()"
+                (resolveConflict)="libraryStore.resolveConflict($event)"
+              />
+
+              @if (libraryStore.conflict()) {
+                <div class="vault-conflict-diff">
+                  <div class="vault-conflict-diff__head">
+                    Conflict Diff (Server v{{ libraryStore.conflict()!.currentVersion }} vs Your Draft)
+                  </div>
+                  <div class="vault-diff-lines">
+                    @for (line of conflictDiffLines(); track $index) {
+                      <div class="vault-diff-line" [attr.data-kind]="line.kind">
+                        <span class="vault-diff-prefix">
+                          {{ line.kind === 'add' ? '+' : line.kind === 'del' ? '-' : ' ' }}
+                        </span>
+                        <span>{{ line.text }}</span>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+            } @else {
+              <rd-empty-state
+                icon="library"
+                title="Pick a document from the vault."
+                description="Select any Markdown document from 00–13 in the left tree to inspect or edit."
+              />
+            }
+          </section>
+
+          <section class="library__preview">
+            @if (libraryStore.doc()) {
+              <rd-vault-preview
+                [markdown]="libraryStore.draft()"
+                [resolveLink]="libraryStore.resolveWikilink"
+                (wikilinkClick)="onOpenDoc($event)"
+              />
+            } @else {
+              <rd-empty-state
+                icon="library"
+                title="Pick a document from the vault."
+                description="Select any Markdown document from 00–13 in the left tree to preview."
+              />
+            }
+          </section>
+
+          <footer class="library__telemetry">
+            <rd-telemetry-bar
+              [markdown]="libraryStore.draft()"
+              [doc]="libraryStore.doc()"
+              (openDoc)="onOpenDoc($event)"
+            />
+          </footer>
+        </div>
+
+        @if (revisionsDrawerOpen() && libraryStore.doc()) {
+          <section class="vault-revisions-drawer" aria-label="Revision history">
+            <header class="vault-revisions-drawer__head">
+              <h3>Revision History</h3>
+              <button
+                type="button"
+                class="rd-btn rd-btn--ghost rd-btn--sm"
+                (click)="revisionsDrawerOpen.set(false)"
+              >
+                Close
+              </button>
+            </header>
+            <div class="vault-revisions-drawer__grid">
+              <div class="vault-revisions-drawer__list">
+                @for (rev of libraryStore.revisions(); track rev.version) {
+                  <button
+                    type="button"
+                    class="vault-rev-item"
+                    [class.is-active]="libraryStore.selectedRevisionVersion() === rev.version"
+                    (click)="libraryStore.inspectRevision(rev.version)"
+                  >
+                    <strong>v{{ rev.version }}</strong>
+                    <span>{{ rev.authorLabel }} · {{ rev.wordCount }} words</span>
+                  </button>
+                }
+              </div>
+              <div class="vault-revisions-drawer__diff">
+                @if (libraryStore.selectedRevisionVersion(); as ver) {
+                  <div class="vault-revisions-drawer__actions">
+                    <span>Comparing v{{ ver }} → current draft</span>
+                    @if (studioStore.canEdit()) {
+                      <button
+                        type="button"
+                        class="rd-btn rd-btn--primary rd-btn--sm"
+                        (click)="libraryStore.restoreRevision(ver)"
+                      >
+                        Restore v{{ ver }}
+                      </button>
+                    }
+                  </div>
+                  <div class="vault-diff-lines">
+                    @for (line of revisionDiffLines(); track $index) {
+                      <div class="vault-diff-line" [attr.data-kind]="line.kind">
+                        <span class="vault-diff-prefix">
+                          {{ line.kind === 'add' ? '+' : line.kind === 'del' ? '-' : ' ' }}
+                        </span>
+                        <span>{{ line.text }}</span>
+                      </div>
+                    }
+                  </div>
+                } @else {
+                  <p class="vault-revisions-drawer__hint">
+                    Select a version on the left to inspect its line-by-line diff.
+                  </p>
+                }
+              </div>
+            </div>
+          </section>
+        }
+      }
+    }
+  }
+</div>

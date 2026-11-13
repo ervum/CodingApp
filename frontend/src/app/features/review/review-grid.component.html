@@ -1,0 +1,22 @@
+<div class="review-groups">
+  @for (group of groups(); track group.gameName) {
+    <section class="review__group">
+      <h2 class="review__group-title">
+        <span>{{ group.gameName }}</span>
+        <rd-count-badge [count]="group.items.length" />
+      </h2>
+      <div
+        class="review__grid"
+        [class.review__grid--stages]="isStagesTab()"
+      >
+        @for (item of group.items; track item.id) {
+          <rd-review-card
+            [item]="item"
+            [selected]="selectedId() === item.id"
+            (open)="open.emit($event)"
+          />
+        }
+      </div>
+    </section>
+  }
+</div>

@@ -1,0 +1,28 @@
+<article class="game-card">
+  <header class="game-card__header">
+    <a class="game-card__title" [routerLink]="['/s', studioSlug(), 'games', game().slug]">
+      {{ game().name }}
+    </a>
+    <span class="game-card__pill">v{{ savedVersion() }} saved</span>
+  </header>
+
+  <div class="game-card__bar" aria-label="Game progress">
+    <div class="game-card__bar-fill" [style.width.%]="game().progressPct"></div>
+  </div>
+
+  <p class="game-card__summary">{{ summaryText() }}</p>
+
+  <a
+    class="game-card__play"
+    [href]="game().playUrl || '#'"
+    target="_blank"
+    rel="noopener"
+    (click)="play.emit(game())"
+  >
+    <span class="game-card__play-left">
+      <rd-icon name="play" [size]="12" />
+      <span>Play the newest build</span>
+    </span>
+    <span class="game-card__play-meta">v{{ savedVersion() }} · sample</span>
+  </a>
+</article>

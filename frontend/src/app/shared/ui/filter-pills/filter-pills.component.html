@@ -1,0 +1,17 @@
+<div class="pills" role="radiogroup">
+  @for (opt of options(); track opt.id) {
+    <button
+      type="button"
+      role="radio"
+      class="pills__item"
+      [class.is-active]="value() === opt.id"
+      [attr.aria-checked]="value() === opt.id"
+      (click)="select(opt.id)"
+    >
+      <span>{{ opt.label }}</span>
+      @if (opt.count !== undefined && opt.count > 0) {
+        <rd-count-badge [count]="opt.count" [tone]="value() === opt.id ? 'accent' : 'neutral'" />
+      }
+    </button>
+  }
+</div>

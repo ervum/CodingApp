@@ -1,0 +1,136 @@
+@use 'rd';
+
+:host {
+  display: block;
+  height: 100%;
+}
+
+.task-drawer {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  height: 100%;
+}
+
+.task-drawer__header {
+  padding: rd.space(4) rd.space(5);
+  border-bottom: 1px solid rd.color('border');
+  display: grid;
+  gap: rd.space(2);
+}
+
+.task-drawer__top {
+  display: flex;
+  align-items: center;
+  gap: rd.space(2);
+}
+
+.task-drawer__priority {
+  font-family: var(--rd-font-mono);
+  font-size: rd.fs('xs');
+  color: rd.color('text-3');
+}
+
+.task-drawer__close {
+  margin-left: auto;
+}
+
+.task-drawer__title {
+  font-size: rd.fs('lg');
+  font-weight: rd.fw('bold');
+  color: rd.color('text-1');
+  margin: 0;
+}
+
+.task-drawer__meta {
+  display: flex;
+  align-items: center;
+  gap: rd.space(2);
+  font-size: rd.fs('xs');
+  color: rd.color('text-3');
+}
+
+.task-drawer__body {
+  overflow-y: auto;
+  padding: rd.space(5);
+  display: grid;
+  gap: rd.space(5);
+  align-content: start;
+  @include rd.scrollbar(6px);
+}
+
+.task-drawer__section {
+  display: grid;
+  gap: rd.space(2);
+}
+
+.task-drawer__section-title {
+  @include rd.section-label;
+  margin: 0;
+}
+
+.task-drawer__form {
+  display: grid;
+  gap: rd.space(3);
+}
+
+.task-drawer__edit-actions {
+  display: flex;
+  gap: rd.space(2);
+}
+
+.task-drawer__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: rd.space(1.5);
+}
+
+.task-drawer__chip {
+  font-family: var(--rd-font-mono);
+  font-size: rd.fs('xs');
+  padding: 2px rd.space(2);
+  border-radius: rd.radius('sm');
+  background: rd.color('bg-3');
+  color: rd.color('text-2');
+}
+
+.task-drawer__list {
+  display: grid;
+  gap: rd.space(2);
+}
+
+.task-drawer__row,
+.task-drawer__run {
+  @include rd.surface(2, 'md');
+  padding: rd.space(2.5) rd.space(3);
+  display: flex;
+  align-items: center;
+  gap: rd.space(2.5);
+  text-decoration: none;
+  color: rd.color('text-1');
+  font-size: rd.fs('sm');
+}
+
+.task-drawer__run {
+  @include rd.interactive('bg-3', 'bg-4');
+}
+
+.task-drawer__run-model {
+  font-family: var(--rd-font-mono);
+  font-size: rd.fs('xs');
+  color: rd.color('text-2');
+}
+
+.task-drawer__run-time {
+  margin-left: auto;
+  font-family: var(--rd-font-mono);
+  font-size: rd.fs('xs');
+  color: rd.color('text-3');
+}
+
+.task-drawer__footer {
+  display: flex;
+  gap: rd.space(2);
+  padding: rd.space(4) rd.space(5);
+  border-top: 1px solid rd.color('border');
+  background: rd.color('bg-1');
+}

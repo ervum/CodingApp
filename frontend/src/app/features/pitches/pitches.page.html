@@ -1,0 +1,228 @@
+<div class="pitches">
+  <header class="pitches__header">
+    <div class="pitches__header-left">
+      <span class="pitches__eyebrow">Pulse · from the Roblox charts</span>
+      <h1 class="pitches__title">Pitches</h1>
+      <p class="pitches__subtitle">
+        Game ideas the market scout brings you from the Roblox charts. Approve one and the studio starts building it.
+      </p>
+    </div>
+
+    <button
+      type="button"
+      class="pitches__compare-btn"
+      [class.is-active]="compareMode()"
+      (click)="toggleCompare()"
+    >
+      Compare side by side
+    </button>
+  </header>
+
+  <nav class="pitches__tabs" aria-label="Pitch filter tabs">
+    <button
+      type="button"
+      class="pitches__tab"
+      [class.is-active]="activeFilter() === 'DECISION'"
+      (click)="activeFilter.set('DECISION')"
+    >
+      <span>Needs your decision</span>
+      <span class="pitches__tab-count">2</span>
+    </button>
+    <button
+      type="button"
+      class="pitches__tab"
+      [class.is-active]="activeFilter() === 'WAITING'"
+      (click)="activeFilter.set('WAITING')"
+    >
+      <span>Waiting on Pulse</span>
+    </button>
+    <button
+      type="button"
+      class="pitches__tab"
+      [class.is-active]="activeFilter() === 'IDEAS'"
+      (click)="activeFilter.set('IDEAS')"
+    >
+      <span>Your ideas</span>
+      <span class="pitches__tab-count pitches__tab-count--muted">0</span>
+    </button>
+    <button
+      type="button"
+      class="pitches__tab"
+      [class.is-active]="activeFilter() === 'HISTORY'"
+      (click)="activeFilter.set('HISTORY')"
+    >
+      <span>History</span>
+      <span class="pitches__tab-count pitches__tab-count--muted">0</span>
+    </button>
+  </nav>
+
+  <div class="pitches__stack" [class.is-compare]="compareMode()">
+    @for (pitch of pitchCards(); track pitch.id) {
+      <article class="pitch-card">
+        <div class="pitch-card__top-tags">
+          <span class="pitch-card__genre">{{ pitch.genreTag }}</span>
+          <span
+            class="pitch-card__match"
+            [class.pitch-card__match--strong]="pitch.matchTone === 'strong'"
+            [class.pitch-card__match--good]="pitch.matchTone === 'good'"
+          >
+            {{ pitch.matchLabel }}
+          </span>
+        </div>
+
+        <div class="pitch-card__title-row">
+          <h2 class="pitch-card__title">{{ pitch.title }}</h2>
+          <span class="pitch-card__ago">{{ pitch.proposedAgo }}</span>
+        </div>
+
+        <p class="pitch-card__summary">{{ pitch.summary }}</p>
+
+        <!-- Purple Accent Callout Box -->
+        <div class="pitch-card__diff">
+          <div class="pitch-card__diff-label">✨ HOW WE'RE DIFFERENT</div>
+          <p class="pitch-card__diff-body">{{ pitch.howDifferent }}</p>
+        </div>
+
+        <!-- 5-Box Metric Row -->
+        <div class="pitch-card__metrics">
+          @for (m of pitch.metrics; track m.label) {
+            <div class="pitch-metric">
+              <span class="pitch-metric__label">{{ m.label }}</span>
+              <span class="pitch-metric__value">{{ m.value }}</span>
+            </div>
+          }
+        </div>
+
+        <!-- 5 Collapsible Accordions -->
+        <div class="pitch-accordions">
+          <!-- 1: The game -->
+          <div class="pitch-acc">
+            <button
+              type="button"
+              class="pitch-acc__trigger"
+              (click)="toggleAccordion(pitch.id, 'game')"
+            >
+              <span>{{ isAccordionOpen(pitch.id, 'game') ? '▾' : '▸' }} The game</span>
+            </button>
+            @if (isAccordionOpen(pitch.id, 'game')) {
+              <div class="pitch-acc__body pitch-acc__body--cols">
+                <div class="pitch-acc__block">
+                  <span class="pitch-acc__label">CORE LOOP</span>
+                  <p>{{ pitch.coreLoop }}</p>
+                </div>
+                <div class="pitch-acc__block">
+                  <span class="pitch-acc__label">FIRST 60 SECONDS</span>
+                  <p>{{ pitch.first60Seconds }}</p>
+                </div>
+                <div class="pitch-acc__block">
+                  <span class="pitch-acc__label">WHY PLAYERS COME BACK</span>
+                  <p>{{ pitch.whyComeBack }}</p>
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- 2: Competitors -->
+          <div class="pitch-acc">
+            <button
+              type="button"
+              class="pitch-acc__trigger"
+              (click)="toggleAccordion(pitch.id, 'competitors')"
+            >
+              <span>{{ isAccordionOpen(pitch.id, 'competitors') ? '▾' : '▸' }} Competitors</span>
+            </button>
+            @if (isAccordionOpen(pitch.id, 'competitors')) {
+              <div class="pitch-acc__body">
+                <ul class="pitch-acc__list">
+                  @for (c of pitch.competitors; track c) {
+                    <li>{{ c }}</li>
+                  }
+                </ul>
+              </div>
+            }
+          </div>
+
+          <!-- 3: Evidence -->
+          <div class="pitch-acc">
+            <button
+              type="button"
+              class="pitch-acc__trigger"
+              (click)="toggleAccordion(pitch.id, 'evidence')"
+            >
+              <span>{{ isAccordionOpen(pitch.id, 'evidence') ? '▾' : '▸' }} Evidence</span>
+            </button>
+            @if (isAccordionOpen(pitch.id, 'evidence')) {
+              <div class="pitch-acc__body">
+                <p>{{ pitch.evidence }}</p>
+              </div>
+            }
+          </div>
+
+          <!-- 4: Building it -->
+          <div class="pitch-acc">
+            <button
+              type="button"
+              class="pitch-acc__trigger"
+              (click)="toggleAccordion(pitch.id, 'building')"
+            >
+              <span>{{ isAccordionOpen(pitch.id, 'building') ? '▾' : '▸' }} Building it</span>
+            </button>
+            @if (isAccordionOpen(pitch.id, 'building')) {
+              <div class="pitch-acc__body">
+                <p>{{ pitch.buildingIt }}</p>
+              </div>
+            }
+          </div>
+
+          <!-- 5: Risks -->
+          <div class="pitch-acc">
+            <button
+              type="button"
+              class="pitch-acc__trigger"
+              (click)="toggleAccordion(pitch.id, 'risks')"
+            >
+              <span>{{ isAccordionOpen(pitch.id, 'risks') ? '▾' : '▸' }} Risks</span>
+            </button>
+            @if (isAccordionOpen(pitch.id, 'risks')) {
+              <div class="pitch-acc__body">
+                <p>{{ pitch.risks }}</p>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Footer Action Bar -->
+        <footer class="pitch-card__footer">
+          <button
+            type="button"
+            class="pitch-btn pitch-btn--approve"
+            (click)="approvePitch(pitch)"
+          >
+            Approve
+          </button>
+          <button
+            type="button"
+            class="pitch-btn pitch-btn--dark"
+            (click)="editAndApprovePitch(pitch)"
+          >
+            Edit &amp; approve
+          </button>
+          <button
+            type="button"
+            class="pitch-btn pitch-btn--dark"
+            (click)="requestChangesPitch(pitch)"
+          >
+            Request changes
+          </button>
+          <button
+            type="button"
+            class="pitch-btn pitch-btn--muted"
+            (click)="declinePitch(pitch)"
+          >
+            Decline
+          </button>
+        </footer>
+      </article>
+    }
+  </div>
+</div>

@@ -1,0 +1,101 @@
+@use 'rd';
+
+:host {
+  display: block;
+}
+
+.stage-detail {
+  display: grid;
+  gap: rd.space(5);
+}
+
+.stage-detail__section {
+  display: grid;
+  gap: rd.space(2.5);
+}
+
+.stage-detail__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.stage-detail__label {
+  @include rd.section-label;
+  margin: 0;
+}
+
+.stage-detail__ver {
+  font-family: var(--rd-font-mono);
+  font-size: rd.fs('xs');
+  color: rd.color('text-2');
+}
+
+.stage-detail__checklist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: rd.space(1.5);
+}
+
+.stage-detail__check {
+  display: flex;
+  align-items: center;
+  gap: rd.space(2);
+  padding: rd.space(2) rd.space(2.5);
+  border-radius: rd.radius('md');
+  background: rd.color('bg-2');
+  font-size: rd.fs('sm');
+  color: rd.color('text-2');
+
+  &.is-done {
+    color: rd.color('success');
+  }
+}
+
+.stage-detail__blockers {
+  display: grid;
+  gap: rd.space(2.5);
+}
+
+.blocker-card {
+  @include rd.surface(2, 'md');
+  padding: rd.space(3);
+  display: grid;
+  gap: rd.space(2);
+
+  &.is-closed {
+    opacity: 0.65;
+  }
+}
+
+.blocker-card__top {
+  display: flex;
+  align-items: center;
+  gap: rd.space(2);
+}
+
+.blocker-card__title {
+  font-size: rd.fs('sm');
+  font-weight: rd.fw('semibold');
+  color: rd.color('text-1');
+}
+
+.blocker-card__state {
+  margin-left: auto;
+  font-family: var(--rd-font-mono);
+  font-size: rd.fs('2xs');
+  color: rd.color('text-3');
+}
+
+.blocker-card__detail {
+  font-size: rd.fs('xs');
+  color: rd.color('text-2');
+  margin: 0;
+}
+
+.blocker-card__actions {
+  display: flex;
+  gap: rd.space(2);
+}

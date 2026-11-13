@@ -1,0 +1,238 @@
+<div class="output-page">
+  <header class="output-page__header">
+    <div>
+      <h1 class="output-page__title">Output</h1>
+      <p class="output-page__subtitle">
+        Final results, responses, created files, artifacts, vault docs, and images from completed tasks and agent delegations.
+      </p>
+    </div>
+    <button
+      type="button"
+      class="rd-btn rd-btn--secondary rd-btn--sm"
+      (click)="store.reloadOutputs()"
+    >
+      <rd-icon name="refresh" [size]="14" />
+      <span>Refresh</span>
+    </button>
+  </header>
+
+  @if (outputs().length === 0) {
+    <rd-empty-state
+      icon="sparkles"
+      title="No completed task outputs yet"
+      description="When a task and all its delegated specialist subtasks finish, their combined output (text, files, code artifacts, vault docs, and images) will appear here and in the sidebar."
+    />
+  } @else {
+    <div class="output-page__grid">
+      <aside class="output-list" aria-label="Completed task outputs">
+        @for (item of outputs(); track item.rootTaskId) {
+          <button
+            type="button"
+            class="output-card"
+            [class.is-selected]="selectedOutput()?.rootTaskId === item.rootTaskId"
+            (click)="selectOutput(item)"
+          >
+            <div class="output-card__top">
+              <rd-status-pill [status]="item.status" />
+              <span class="output-card__time">{{ item.completedAt | relativeTime }}</span>
+            </div>
+            <div class="output-card__title">{{ item.title }}</div>
+            <div class="output-card__badges">
+              @if (item.finalText) {
+                <span class="output-badge">Text</span>
+              }
+              @if (item.artifacts.length > 0) {
+                <span class="output-badge output-badge--accent">
+                  {{ item.artifacts.length }} {{ item.artifacts.length === 1 ? 'file' : 'files' }}
+                </span>
+              }
+              @if (item.vaultDocs.length > 0) {
+                <span class="output-badge output-badge--accent">
+                  {{ item.vaultDocs.length }} {{ item.vaultDocs.length === 1 ? 'doc' : 'docs' }}
+                </span>
+              }
+              @if (item.images.length > 0) {
+                <span class="output-badge output-badge--accent">
+                  {{ item.images.length }} {{ item.images.length === 1 ? 'image' : 'images' }}
+                </span>
+              }
+              @if (item.totalTasksInTree > 1) {
+                <span class="output-badge">
+                  {{ item.completedTasksInTree }}/{{ item.totalTasksInTree }} tasks
+                </span>
+              }
+            </div>
+            <div class="output-card__agents">
+              @for (agentKey of item.participatingAgents; track agentKey) {
+                <rd-agent-avatar [agent]="agentFor(agentKey)" size="xs" [showStatus]="false" />
+              }
+            </div>
+          </button>
+        }
+      </aside>
+
+      @if (selectedOutput(); as out) {
+        <main class="output-detail">
+          <header class="output-detail__header">
+            <div class="output-detail__meta">
+              <rd-status-pill [status]="out.status" />
+              <span>Completed {{ out.completedAt | relativeTime }}</span>
+              <span>·</span>
+              <span>{{ out.completedTasksInTree }}/{{ out.totalTasksInTree }} tasks finished</span>
+            </div>
+            <h2 class="output-detail__title">{{ out.title }}</h2>
+            <details class="output-detail__brief">
+              <summary>Prompt / Task Brief</summary>
+              <div class="output-detail__brief-body">
+                <rd-markdown-view [markdown]="out.brief" />
+              </div>
+            </details>
+          </header>
+
+          @if (out.images.length > 0) {
+            <section class="output-section">
+              <h3 class="output-section__title">GENERATED IMAGES ({{ out.images.length }})</h3>
+              <div class="output-images">
+                @for (img of out.images; track img.mediaId) {
+                  <figure class="output-image-card">
+                    <img
+                      class="output-image-card__img"
+                      [src]="mediaUrlFor(img.mediaId)"
+                      [alt]="img.title"
+                      loading="lazy"
+                    />
+                    <figcaption class="output-image-card__caption">
+                      <span class="output-image-card__title">{{ img.title }}</span>
+                      <span class="output-image-card__meta">
+                        {{ agentFor(img.agentKey).name }}
+                        @if (img.width && img.height) {
+                          · {{ img.width }}×{{ img.height }}
+                        }
+                        @if (img.bytes > 0) {
+                          · {{ img.bytes | bytes }}
+                        }
+                      </span>
+                    </figcaption>
+                  </figure>
+                }
+              </div>
+            </section>
+          }
+
+          @if (out.artifacts.length > 0) {
+            <section class="output-section">
+              <h3 class="output-section__title">CREATED FILES & ARTIFACTS ({{ out.artifacts.length }})</h3>
+              <div class="output-stack">
+                @for (art of out.artifacts; track art.id) {
+                  <details class="output-artifact" open>
+                    <summary class="output-artifact__header">
+                      <span class="output-artifact__badge">FILE</span>
+                      <span class="output-artifact__path">{{ art.path }}</span>
+                      <span class="output-artifact__meta">
+                        {{ agentFor(art.agentKey).name }} · {{ art.language }} · {{ art.bytes | bytes }}
+                      </span>
+                      <button
+                        type="button"
+                        class="rd-btn rd-btn--ghost rd-btn--sm output-artifact__copy"
+                        (click)="$event.stopPropagation(); copyText(art.content, art.path)"
+                      >
+                        <rd-icon name="copy" [size]="13" />
+                        <span>Copy</span>
+                      </button>
+                    </summary>
+                    <pre class="output-artifact__code"><code [innerHTML]="highlightCode(art)"></code></pre>
+                  </details>
+                }
+              </div>
+            </section>
+          }
+
+          @if (out.vaultDocs.length > 0) {
+            <section class="output-section">
+              <h3 class="output-section__title">UPDATED VAULT DOCUMENTS ({{ out.vaultDocs.length }})</h3>
+              <div class="output-stack">
+                @for (doc of out.vaultDocs; track doc.documentId) {
+                  <details class="output-artifact" open>
+                    <summary class="output-artifact__header">
+                      <span class="output-artifact__badge">VAULT DOC</span>
+                      <span class="output-artifact__path">{{ doc.path }}</span>
+                      <span class="output-artifact__meta">
+                        {{ agentFor(doc.agentKey).name }} · v{{ doc.version }} · {{ doc.bytes | bytes }}
+                      </span>
+                      <a
+                        class="output-artifact__link"
+                        [routerLink]="['/s', studioSlug(), 'library']"
+                        [queryParams]="{ doc: doc.documentId }"
+                        (click)="$event.stopPropagation()"
+                      >
+                        Open in Library →
+                      </a>
+                    </summary>
+                    <div class="output-artifact__markdown">
+                      <rd-markdown-view [markdown]="doc.markdown" />
+                    </div>
+                  </details>
+                }
+              </div>
+            </section>
+          }
+
+          @if (out.responses.length > 0) {
+            <section class="output-section">
+              <h3 class="output-section__title">AGENT RESPONSES ({{ out.responses.length }})</h3>
+              <div class="output-stack">
+                @for (resp of out.responses; track resp.runId) {
+                  <article class="output-response">
+                    <header class="output-response__header">
+                      <rd-agent-avatar [agent]="agentFor(resp.agentKey)" size="xs" [showStatus]="false" />
+                      <span class="output-response__agent">{{ agentFor(resp.agentKey).name }}</span>
+                      <span class="output-response__task">· {{ resp.taskTitle }}</span>
+                      <a
+                        class="output-response__link"
+                        [routerLink]="['/s', studioSlug(), resp.agentKey === 'lead' ? 'lead' : 'team']"
+                      >
+                        View in chat →
+                      </a>
+                    </header>
+
+                    @if (resp.thinkingDurationMs !== null || resp.thinkingText) {
+                      <details class="output-response__thoughts">
+                        <summary>
+                          Thought for {{ formatDuration(resp.thinkingDurationMs) }}
+                        </summary>
+                        <div class="output-response__thoughts-body">
+                          @if (resp.thinkingText) {
+                            <rd-markdown-view [markdown]="resp.thinkingText" />
+                          } @else {
+                            <p class="rd-text-muted">
+                              Reasoned for {{ formatDuration(resp.thinkingDurationMs) }} before responding.
+                            </p>
+                          }
+                        </div>
+                      </details>
+                    }
+
+                    @if (resp.responseText) {
+                      <div class="output-response__body">
+                        <rd-markdown-view [markdown]="resp.responseText" />
+                      </div>
+                    }
+                  </article>
+                }
+              </div>
+            </section>
+          } @else if (out.finalText) {
+            <section class="output-section">
+              <h3 class="output-section__title">RESULT</h3>
+              <div class="output-response">
+                <div class="output-response__body">
+                  <rd-markdown-view [markdown]="out.finalText" />
+                </div>
+              </div>
+            </section>
+          }
+        </main>
+      }
+    </div>
+  }
+</div>

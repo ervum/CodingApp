@@ -1,0 +1,115 @@
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th
+          scope="col"
+          class="rank"
+          [attr.aria-sort]="ariaSort('rank')"
+          (click)="toggleSort('rank')"
+        >
+          #
+        </th>
+        <th
+          scope="col"
+          [attr.aria-sort]="ariaSort('name')"
+          (click)="toggleSort('name')"
+        >
+          Game
+        </th>
+        <th
+          scope="col"
+          [attr.aria-sort]="ariaSort('genre')"
+          (click)="toggleSort('genre')"
+        >
+          Genre
+        </th>
+        <th
+          scope="col"
+          class="num"
+          [attr.aria-sort]="ariaSort('playing')"
+          (click)="toggleSort('playing')"
+        >
+          CCU
+        </th>
+        <th
+          scope="col"
+          class="num"
+          [attr.aria-sort]="ariaSort('delta7dPct')"
+          (click)="toggleSort('delta7dPct')"
+        >
+          7d Δ
+        </th>
+        <th scope="col">Trend</th>
+        <th
+          scope="col"
+          class="num"
+          [attr.aria-sort]="ariaSort('likeRatio')"
+          (click)="toggleSort('likeRatio')"
+        >
+          Likes
+        </th>
+        <th
+          scope="col"
+          class="num"
+          [attr.aria-sort]="ariaSort('visits')"
+          (click)="toggleSort('visits')"
+        >
+          Visits
+        </th>
+        <th
+          scope="col"
+          class="num"
+          [attr.aria-sort]="ariaSort('favoritedCount')"
+          (click)="toggleSort('favoritedCount')"
+        >
+          Favorites
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of rows(); track row.universeId) {
+        <tr (click)="openGame.emit(row)">
+          <td class="rank num">{{ row.rank }}</td>
+          <td>
+            <div class="game">
+              @if (row.iconUrl) {
+                <img [src]="row.iconUrl" [alt]="row.name" loading="lazy" />
+              } @else {
+                <span class="game__initials" aria-hidden="true">{{ initialsFor(row.name) }}</span>
+              }
+              <div class="game__meta">
+                <span class="game__name">{{ row.name }}</span>
+                <span class="game__creator">{{ row.creatorName }}</span>
+              </div>
+            </div>
+          </td>
+          <td>
+            @if (row.genre) {
+              <span class="genre-chip">{{ row.genre }}</span>
+            } @else {
+              <span class="flat">—</span>
+            }
+          </td>
+          <td class="num">{{ row.playing | compactNumber }}</td>
+          <td class="num">
+            <rd-delta [value]="row.delta7dPct" />
+          </td>
+          <td>
+            <rd-sparkline [points]="row.sparkline" />
+          </td>
+          <td
+            class="num"
+            [class.pos]="likeTone(row.likeRatio) === 'pos'"
+            [class.warn]="likeTone(row.likeRatio) === 'warn'"
+            [class.flat]="likeTone(row.likeRatio) === 'flat'"
+          >
+            {{ likePct(row.likeRatio) }}
+          </td>
+          <td class="num">{{ row.visits | compactNumber }}</td>
+          <td class="num">{{ row.favoritedCount | compactNumber }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

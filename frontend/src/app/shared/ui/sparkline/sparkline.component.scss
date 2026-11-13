@@ -1,0 +1,20 @@
+@use 'rd';
+
+:host {
+  display: inline-flex;
+  align-items: center;
+}
+
+.sparkline--up {
+  color: rd.color('success');
+}
+
+.sparkline--down {
+  color: rd.color('danger');
+}
+
+.sparkline__empty {
+  color: rd.color('text-3');
+  font-family: var(--rd-font-mono);
+  font-size: rd.fs('sm');
+}

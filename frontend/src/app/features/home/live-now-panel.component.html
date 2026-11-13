@@ -1,0 +1,135 @@
+<div class="live-panel">
+  <!-- Card 1: Live now -->
+  <section class="telemetry-card" aria-label="Live now">
+    <header class="telemetry-card__header">
+      <span class="telemetry-card__dot telemetry-card__dot--live"></span>
+      <h2 class="telemetry-card__title telemetry-card__title--normal">Live now</h2>
+    </header>
+    @if (store.filteredLiveRuns().length === 0) {
+      <div class="telemetry-card__empty">Nobody is working right now.</div>
+    } @else {
+      <div class="live-panel__runs">
+        @for (run of store.filteredLiveRuns(); track run.runId) {
+          <a
+            class="live-run"
+            [routerLink]="['/s', studioSlug(), 'team', run.agentKey]"
+          >
+            <rd-agent-avatar [agentKey]="run.agentKey" size="sm" />
+            <div class="live-run__main">
+              <div class="live-run__top">
+                <span class="live-run__agent">{{ agentFor(run.agentKey).name }}</span>
+                <span class="live-run__task">{{ run.taskTitle }}</span>
+                <span class="live-run__elapsed">{{ run.startedAt | relativeTime }}</span>
+              </div>
+              <div class="live-run__snippet">
+                {{ run.lastSnippet ?? 'Streaming run output…' }}
+              </div>
+            </div>
+          </a>
+        }
+      </div>
+    }
+  </section>
+
+  <!-- Card 2: WHERE EACH GAME IS -->
+  <section class="telemetry-card" aria-label="Where each game is">
+    <header class="telemetry-card__header">
+      <h2 class="telemetry-card__title">WHERE EACH GAME IS</h2>
+    </header>
+    <div class="live-panel__games">
+      @for (game of store.visibleGames(); track game.id) {
+        <rd-game-progress-card [game]="game" />
+      }
+    </div>
+  </section>
+
+  <!-- Card 3: STUDIO -->
+  <section class="telemetry-card" aria-label="Studio">
+    <header class="telemetry-card__header">
+      <h2 class="telemetry-card__title">STUDIO</h2>
+    </header>
+    <div class="studio-box__top">
+      <span class="studio-box__label">Studios for agents</span>
+      <div class="studio-box__btns">
+        <button
+          type="button"
+          class="studio-box__btn"
+          [class.is-active]="activeStudioSlot() === 'all'"
+          (click)="activeStudioSlot.set('all')"
+        >
+          All
+        </button>
+        @for (lane of store.lanes(); track lane.id; let idx = $index) {
+          <button
+            type="button"
+            class="studio-box__btn"
+            [class.is-active]="activeStudioSlot() === lane.id || activeStudioSlot() === '' + (idx + 1)"
+            (click)="activeStudioSlot.set(lane.id)"
+          >
+            {{ idx + 1 }}
+          </button>
+        }
+        @if (store.isAdmin()) {
+          <button
+            type="button"
+            class="studio-box__btn"
+            title="Create Studio lane"
+            (click)="createLane()"
+          >
+            +
+          </button>
+        }
+      </div>
+    </div>
+    @if (visibleLanes().length === 0) {
+      <div class="studio-box__lane">
+        <span class="studio-box__lane-name">Home · Lane 1</span>
+        <span class="studio-box__lane-status">Idle</span>
+      </div>
+    } @else {
+      @for (lane of visibleLanes(); track lane.id) {
+        <div class="studio-box__lane">
+          <span class="studio-box__lane-name">
+            {{ lane.name }}
+          </span>
+          <span class="studio-box__lane-status">
+            @if (lane.heldByAgentKey) {
+              {{ agentFor(lane.heldByAgentKey).name }}
+              @if (store.isAdmin()) {
+                ·
+                <button
+                  type="button"
+                  class="studio-box__btn"
+                  [disabled]="busyLaneId() === lane.id"
+                  (click)="releaseLane(lane)"
+                >
+                  Release
+                </button>
+              }
+            } @else {
+              Idle
+            }
+          </span>
+        </div>
+      }
+    }
+  </section>
+
+  <!-- Card 4: DATA FRESHNESS -->
+  <section class="telemetry-card" aria-label="Data freshness">
+    <header class="telemetry-card__header">
+      <h2 class="telemetry-card__title">DATA FRESHNESS</h2>
+    </header>
+    <div class="freshness-list">
+      @for (row of freshnessRows(); track row.label) {
+        <div class="freshness-row">
+          <span class="freshness-row__left">
+            <span class="freshness-row__dot"></span>
+            <span class="freshness-row__label">{{ row.label }}:</span>
+          </span>
+          <span class="freshness-row__val">{{ row.value }}</span>
+        </div>
+      }
+    </div>
+  </section>
+</div>

@@ -1,0 +1,61 @@
+@use 'rd';
+
+:host {
+  display: block;
+}
+
+.item {
+  width: 100%;
+  text-align: left;
+  padding: rd.space(3) rd.space(4);
+  border-bottom: 1px solid rd.color('border');
+  display: flex;
+  flex-direction: column;
+  gap: rd.space(2);
+  @include rd.interactive;
+}
+
+.item__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: rd.space(2);
+}
+
+.item__title {
+  font-size: rd.fs('base');
+  font-weight: rd.fw('semibold');
+  color: rd.color('text-1');
+  @include rd.truncate(1);
+}
+
+.item__logline {
+  margin: 0;
+  font-size: rd.fs('sm');
+  color: rd.color('text-2');
+  @include rd.truncate(2);
+}
+
+.item__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: rd.space(2);
+  font-size: rd.fs('xs');
+  color: rd.color('text-3');
+}
+
+.item__genre {
+  padding: 1px rd.space(1.5);
+  border-radius: rd.radius('xs');
+  background: rd.color('bg-3');
+  color: rd.color('text-2');
+}
+
+.item__metric {
+  font-family: var(--rd-font-mono);
+
+  strong {
+    color: rd.color('text-1');
+  }
+}

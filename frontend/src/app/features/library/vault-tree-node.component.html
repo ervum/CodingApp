@@ -1,0 +1,48 @@
+<div class="node">
+  <button
+    type="button"
+    class="node__row"
+    [class.is-selected]="isSelected()"
+    [class.node__row--folder]="isFolder()"
+    [style.padding-left]="indentPx()"
+    [attr.aria-expanded]="isFolder() ? isExpanded() : null"
+    (click)="onClick()"
+  >
+    @if (isFolder()) {
+      <rd-icon
+        class="node__chevron"
+        [name]="isExpanded() ? 'chevron-down' : 'chevron-right'"
+        [size]="13"
+      />
+      <rd-icon
+        class="node__icon node__icon--folder"
+        [name]="isExpanded() ? 'folder-open' : 'folder'"
+        [size]="15"
+      />
+    } @else {
+      <span class="node__spacer" aria-hidden="true"></span>
+      <rd-icon class="node__icon" name="file-text" [size]="14" />
+    }
+
+    <span class="node__name">{{ node().name }}</span>
+
+    @if (!isFolder() && node().wordCount !== undefined) {
+      <span class="node__words">{{ node().wordCount | number }}w</span>
+    }
+  </button>
+
+  @if (isFolder() && isExpanded() && node().children?.length) {
+    <div class="node__children" role="group">
+      @for (child of node().children!; track child.id) {
+        <rd-vault-tree-node
+          [node]="child"
+          [depth]="depth() + 1"
+          [selectedDocId]="selectedDocId()"
+          [expanded]="expanded()"
+          (toggle)="toggle.emit($event)"
+          (openDoc)="openDoc.emit($event)"
+        />
+      }
+    </div>
+  }
+</div>

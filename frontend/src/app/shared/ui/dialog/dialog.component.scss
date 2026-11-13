@@ -1,0 +1,61 @@
+@use 'rd';
+
+:host {
+  display: contents;
+}
+
+.dialog {
+  width: min(var(--dialog-w, 520px), calc(100vw - 32px));
+  max-height: calc(100dvh - 48px);
+  margin: auto;
+  padding: 0;
+  border: 0;
+  border-radius: rd.radius('xl');
+  background: transparent;
+  color: rd.color('text-1');
+  z-index: rd.z('dialog');
+
+  &::backdrop {
+    background: rd.color('overlay');
+    backdrop-filter: blur(4px);
+  }
+
+  &[open] .dialog__panel {
+    animation: rd-scale-in rd.dur('base') rd.ease('emphasized') both;
+  }
+}
+
+.dialog__panel {
+  @include rd.glass-panel(0.92, 20px, true);
+  border-radius: rd.radius('xl');
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.dialog__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: rd.space(4) rd.space(5);
+  border-bottom: 1px solid rd.color('border');
+}
+
+.dialog__header-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dialog__subtitle {
+  margin: 0;
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.dialog__body {
+  padding: rd.space(5);
+  overflow-y: auto;
+  @include rd.scrollbar(6px);
+}

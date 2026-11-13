@@ -1,0 +1,22 @@
+@use 'rd';
+
+:host {
+  display: block;
+  height: 100%;
+  overflow: auto;
+  @include rd.scrollbar;
+}
+
+.settings {
+  padding: rd.space(6) rd.space(8) rd.space(12);
+  max-width: rd.layout('content-max');
+  margin: 0 auto;
+  display: grid;
+  gap: rd.space(6);
+}
+
+.settings__title {
+  font-size: rd.fs('xl');
+  font-weight: rd.fw('bold');
+  margin: 0 0 rd.space(1);
+}

@@ -1,0 +1,10 @@
+@use 'tokens' as t;
+@use 'mixins' as m;
+.rd-page { height: 100%; overflow: auto; padding: t.space(6) t.space(8); @include m.scrollbar; }
+.rd-page__inner { max-width: t.layout('content-max'); margin-inline: auto; }
+.rd-stack { display: flex; flex-direction: column; gap: var(--rd-stack-gap, #{t.space(3)}); }
+.rd-row { display: flex; align-items: center; gap: var(--rd-row-gap, #{t.space(2)}); }
+.rd-spacer { flex: 1 1 auto; }
+.rd-divider { height: 1px; background: t.color('border'); border: 0; }
+.rd-scroll { overflow: auto; @include m.scrollbar; }
+.rd-sr-only { @include m.visually-hidden; }

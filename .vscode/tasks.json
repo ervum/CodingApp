@@ -1,0 +1,220 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "RobDev: Run & Test Project (Verify All Runnable Parts)",
+      "dependsOrder": "parallel",
+      "dependsOn": [
+        "RobDev: Build Shared (@robdev/shared)",
+        "RobDev: Test All Packages (Vitest)",
+        "RobDev: Typecheck Shared & Backend",
+        "RobDev: Database Up (Postgres 17)",
+        "RobDev: Database Seed (Prisma + Vault)"
+      ],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "RobDev: Build Shared (@robdev/shared)",
+      "type": "shell",
+      "command": "pnpm -C shared run build",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": "$tsc"
+    },
+    {
+      "label": "RobDev: Test All Packages (Vitest)",
+      "dependsOrder": "parallel",
+      "dependsOn": [
+        "RobDev: Test Shared (@robdev/shared)",
+        "RobDev: Test Backend (@robdev/backend)",
+        "RobDev: Test Frontend (@robdev/frontend)"
+      ],
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "RobDev: Test Shared (@robdev/shared)",
+      "type": "shell",
+      "command": "pnpm -C shared run test",
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "RobDev: Test Backend (@robdev/backend)",
+      "type": "shell",
+      "command": "pnpm -C backend run test",
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "RobDev: Test Frontend (@robdev/frontend)",
+      "type": "shell",
+      "command": "pnpm -C frontend run test",
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "RobDev: Typecheck Shared & Backend",
+      "dependsOrder": "parallel",
+      "dependsOn": [
+        "RobDev: Typecheck Shared (@robdev/shared)",
+        "RobDev: Typecheck Backend (@robdev/backend)",
+        "RobDev: Typecheck Frontend (@robdev/frontend)"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "RobDev: Typecheck Shared (@robdev/shared)",
+      "type": "shell",
+      "command": "pnpm -C shared exec tsc -p tsconfig.json --noEmit",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": "$tsc"
+    },
+    {
+      "label": "RobDev: Typecheck Backend (@robdev/backend)",
+      "type": "shell",
+      "command": "pnpm -C backend exec tsc -p tsconfig.json --noEmit",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": "$tsc"
+    },
+    {
+      "label": "RobDev: Typecheck Frontend (@robdev/frontend)",
+      "type": "shell",
+      "command": "pnpm -C frontend exec tsc -p tsconfig.json --noEmit",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": "$tsc"
+    },
+    {
+      "label": "RobDev: Database Up (Postgres 17)",
+      "type": "shell",
+      "command": "pnpm db:up",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "RobDev: Database Migrate (Prisma)",
+      "type": "shell",
+      "command": "pnpm -C backend run prisma:migrate",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "RobDev: Database Seed (Prisma + Vault)",
+      "type": "shell",
+      "command": "pnpm -C backend run prisma:seed",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "RobDev: Start Full Dev Stack (pnpm dev)",
+      "dependsOrder": "parallel",
+      "dependsOn": [
+        "RobDev: Dev Database (Postgres 17)",
+        "RobDev: Dev Shared (@robdev/shared)",
+        "RobDev: Dev Backend (@robdev/backend)",
+        "RobDev: Dev Frontend (@robdev/frontend)"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "RobDev: Dev Database (Postgres 17)",
+      "type": "shell",
+      "command": "docker compose up postgres",
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "RobDev: Dev Shared (@robdev/shared)",
+      "type": "shell",
+      "command": "pnpm -C shared run dev",
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": "$tsc-watch"
+    },
+    {
+      "label": "RobDev: Dev Backend (@robdev/backend)",
+      "type": "shell",
+      "command": "pnpm -C backend run start:dev",
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "RobDev: Dev Frontend (@robdev/frontend)",
+      "type": "shell",
+      "command": "pnpm -C frontend run start",
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": []
+    }
+  ]
+}

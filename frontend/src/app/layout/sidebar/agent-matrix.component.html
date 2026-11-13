@@ -1,0 +1,48 @@
+<div class="team-block">
+  <div class="team-block__header">TEAM</div>
+
+  <div class="matrix" role="group" aria-label="Agent team matrix">
+    @for (agent of store.agents(); track agent.key) {
+      <a
+        class="matrix__cell"
+        [routerLink]="['/s', store.studio()?.slug ?? 'inclined-games', 'team', agent.key]"
+        [style.--rd-agent-color]="agent.color"
+        [attr.data-status]="agent.status"
+        [attr.title]="cellTitle(agent.name, agent.status)"
+      >
+        <rd-icon [name]="agentIcon(agent.key)" [size]="15" />
+        <span class="matrix__dot" [attr.data-status]="agent.status"></span>
+      </a>
+    }
+  </div>
+
+  <div class="team-block__status-row">
+    <span class="team-block__idle">
+      <span class="team-block__idle-dot"></span>
+      <span>{{ store.workingAgents().length === 0 ? 'All idle' : store.workingAgents().length + ' working' }}</span>
+    </span>
+    <div class="team-block__actions">
+      <button
+        type="button"
+        class="team-block__browser-btn"
+        [class.is-active]="isBrowserVisible()"
+        [disabled]="togglingBrowser()"
+        (click)="onToggleBrowserVisibility()"
+        [attr.title]="
+          isBrowserVisible()
+            ? 'Hide the agent browser window'
+            : 'Show the agent browser window'
+        "
+      >
+        <rd-icon name="eye" [size]="11" />
+        <span>{{ isBrowserVisible() ? 'Hide Browser' : 'Show Browser' }}</span>
+      </button>
+      <a
+        class="team-block__wake"
+        [routerLink]="['/s', store.studio()?.slug ?? 'inclined-games', 'lead']"
+      >
+        Wake
+      </a>
+    </div>
+  </div>
+</div>

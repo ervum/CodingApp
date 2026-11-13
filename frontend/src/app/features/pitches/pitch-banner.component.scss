@@ -1,0 +1,46 @@
+@use 'rd';
+
+:host {
+  display: block;
+}
+
+.banner {
+  padding: rd.space(4);
+  border-radius: rd.radius('md');
+  border: 1px solid rd.color('border');
+  border-left-width: 3px;
+  display: flex;
+  flex-direction: column;
+  gap: rd.space(2);
+  height: 100%;
+
+  &[data-kind='changed'] {
+    background: rd.color('info-soft');
+    border-left-color: rd.color('info');
+
+    .banner__title {
+      color: rd.color('info');
+    }
+  }
+
+  &[data-kind='different'] {
+    background: rd.color('primary-soft');
+    border-left-color: rd.color('neon');
+
+    .banner__title {
+      color: rd.color('neon');
+    }
+  }
+}
+
+.banner__title {
+  @include rd.section-label;
+  margin: 0;
+}
+
+.banner__body {
+  margin: 0;
+  font-size: rd.fs('sm');
+  line-height: rd.lh('relaxed');
+  color: rd.color('text-1');
+}

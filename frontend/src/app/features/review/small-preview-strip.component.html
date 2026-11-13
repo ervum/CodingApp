@@ -1,0 +1,13 @@
+<section class="strip" aria-label="How it reads small">
+  <h3 class="strip__label">HOW IT READS SMALL</h3>
+  <div class="strip__frames" [attr.data-aspect]="aspect()">
+    @for (sz of sizes; track sz) {
+      <figure class="strip__frame" [style.--frame-w.px]="sz">
+        <div class="strip__box">
+          <img [src]="src()" [alt]="'Preview at ' + sz + 'px'" />
+        </div>
+        <figcaption class="strip__caption">{{ sz }}px</figcaption>
+      </figure>
+    }
+  </div>
+</section>

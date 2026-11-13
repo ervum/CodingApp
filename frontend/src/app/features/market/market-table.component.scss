@@ -1,0 +1,144 @@
+@use 'rd';
+
+:host {
+  display: block;
+  @include rd.surface(1, 'lg');
+  overflow: hidden;
+}
+
+.table-wrap {
+  overflow: auto;
+  max-height: calc(100dvh - 220px);
+  @include rd.scrollbar(8px);
+}
+
+table {
+  width: 100%;
+  font-size: rd.fs('md');
+  @include rd.numeric;
+}
+
+thead th {
+  position: sticky;
+  top: 0;
+  z-index: rd.z('sticky');
+  background: rd.color('bg-2');
+  @include rd.section-label;
+  text-align: left;
+  padding: rd.space(2.5) rd.space(3);
+  border-bottom: 1px solid rd.color('border');
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+
+  &.num {
+    text-align: right;
+  }
+
+  &[aria-sort] {
+    color: rd.color('text-1');
+  }
+}
+
+tbody tr {
+  border-bottom: 1px solid rd.color('border');
+  cursor: pointer;
+  transition: background-color rd.dur('instant');
+
+  &:hover {
+    background: rd.color('bg-2');
+  }
+}
+
+td {
+  padding: rd.space(2) rd.space(3);
+  height: 44px;
+  white-space: nowrap;
+
+  &.num {
+    text-align: right;
+    font-family: var(--rd-font-mono);
+    font-size: rd.fs('sm');
+  }
+}
+
+.rank {
+  color: rd.color('text-3');
+  width: 48px;
+}
+
+.game {
+  display: flex;
+  align-items: center;
+  gap: rd.space(2.5);
+  min-width: 260px;
+
+  img {
+    width: 28px;
+    height: 28px;
+    border-radius: rd.radius('sm');
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+}
+
+.game__initials {
+  width: 28px;
+  height: 28px;
+  border-radius: rd.radius('sm');
+  background: rd.color('bg-3');
+  border: 1px solid rd.color('border-strong');
+  color: rd.color('text-2');
+  font-family: var(--rd-font-mono);
+  font-size: rd.fs('xs');
+  font-weight: rd.fw('semibold');
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.game__meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.game__name {
+  font-weight: rd.fw('medium');
+  color: rd.color('text-1');
+  @include rd.truncate(1);
+}
+
+.game__creator {
+  font-size: rd.fs('xs');
+  color: rd.color('text-3');
+  @include rd.truncate(1);
+}
+
+.genre-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 rd.space(2);
+  border-radius: rd.radius('xs');
+  background: rd.color('bg-3');
+  color: rd.color('text-2');
+  font-size: rd.fs('xs');
+}
+
+.pos {
+  color: rd.color('success');
+}
+
+.warn {
+  color: rd.color('warning');
+}
+
+.neg {
+  color: rd.color('danger');
+}
+
+.flat {
+  color: rd.color('text-3');
+}

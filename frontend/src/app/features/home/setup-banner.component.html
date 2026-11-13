@@ -1,0 +1,14 @@
+@if (visible()) {
+  <div class="setup-banner" role="region" aria-label="Model setup notice">
+    <div class="setup-banner__icon">
+      <rd-icon name="alert-triangle" [size]="18" />
+    </div>
+    <div class="setup-banner__copy">
+      <div class="setup-banner__title">{{ headline() }}</div>
+      <div class="setup-banner__sub">{{ detail() }}</div>
+    </div>
+    <a class="rd-btn rd-btn--secondary rd-btn--sm" [routerLink]="settingsRoute()">
+      <span>Settings → Models</span>
+    </a>
+  </div>
+}

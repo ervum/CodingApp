@@ -1,0 +1,43 @@
+<rd-dialog [(open)]="open" title="Ask Lead" width="520px">
+  <form class="rd-stack" (ngSubmit)="submit()">
+    <label class="rd-field">
+      <span class="rd-field__label">What should Lead plan or coordinate?</span>
+      <textarea
+        class="rd-textarea"
+        name="prompt"
+        rows="4"
+        placeholder="Ask the Lead anything, or say what you want done…"
+        [ngModel]="prompt()"
+        (ngModelChange)="prompt.set($event)"
+        required
+      ></textarea>
+    </label>
+
+    <label class="rd-field">
+      <span class="rd-field__label">Game context (optional)</span>
+      <select
+        class="rd-select"
+        name="gameId"
+        [ngModel]="gameId()"
+        (ngModelChange)="gameId.set($event)"
+      >
+        <option value="">Studio-wide (all games)</option>
+        @for (game of store.games(); track game.id) {
+          <option [value]="game.id">{{ game.name }}</option>
+        }
+      </select>
+    </label>
+
+    <div class="rd-row">
+      <span class="rd-spacer"></span>
+      <button type="button" class="rd-btn rd-btn--ghost" (click)="open.set(false)">Cancel</button>
+      <button
+        type="submit"
+        class="rd-btn rd-btn--primary"
+        [disabled]="submitting() || prompt().trim().length < 3"
+      >
+        Send to Lead
+      </button>
+    </div>
+  </form>
+</rd-dialog>

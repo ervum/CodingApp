@@ -1,0 +1,63 @@
+@use 'rd';
+
+:host {
+  position: fixed;
+  right: rd.space(5);
+  bottom: rd.space(5);
+  z-index: rd.z('toast');
+  display: flex;
+  flex-direction: column;
+  gap: rd.space(2);
+  pointer-events: none;
+}
+
+.toast-host {
+  display: flex;
+  flex-direction: column;
+  gap: rd.space(2);
+}
+
+.toast {
+  pointer-events: auto;
+  @include rd.glass-panel(0.92, 16px, true);
+  border-radius: rd.radius('lg');
+  padding: rd.space(3) rd.space(4);
+  min-width: 260px;
+  max-width: 420px;
+  display: flex;
+  align-items: center;
+  gap: rd.space(3);
+  font-size: rd.fs('sm');
+  color: rd.color('text-1');
+  animation: rd-slide-up rd.dur('base') rd.ease('emphasized') both;
+
+  &[data-tone='success'] {
+    border-left: 3px solid rd.color('success');
+  }
+  &[data-tone='warning'] {
+    border-left: 3px solid rd.color('warning');
+  }
+  &[data-tone='error'] {
+    border-left: 3px solid rd.color('danger');
+  }
+  &[data-tone='info'] {
+    border-left: 3px solid rd.color('info');
+  }
+}
+
+.toast__msg {
+  flex: 1 1 auto;
+}
+
+.toast__close {
+  color: rd.color('text-3');
+  cursor: pointer;
+  display: inline-flex;
+  padding: rd.space(0.5);
+  border-radius: rd.radius('xs');
+
+  &:hover {
+    color: rd.color('text-1');
+    background: rd.color('bg-3');
+  }
+}

@@ -1,0 +1,12 @@
+<details class="accordion" [attr.open]="open() ? '' : null" (toggle)="onToggle($event)">
+  <summary class="accordion__summary">
+    <rd-icon name="chevron-right" [size]="15" class="accordion__chevron" />
+    <span class="accordion__title">{{ title() }}</span>
+    @if (badge()) {
+      <span class="accordion__badge">{{ badge() }}</span>
+    }
+  </summary>
+  <div class="accordion__body rd-prose">
+    <ng-content />
+  </div>
+</details>
